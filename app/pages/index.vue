@@ -188,7 +188,7 @@
             <template #header>
               <div class="flex items-center gap-3">
                 <div class="p-2 bg-primary/10 rounded-lg flex">
-                  <UIicon
+                  <UIcon
                     name="i-lucide-map-pin"
                     class="w-7 h-7 text-primary"
                   />
@@ -206,6 +206,7 @@
 
             <template #body>
               <div class="overflow-y-auto max-h-[calc(70vh-120px)]">
+                <!-- Empty State -->
                 <div
                   v-if="coverageData.length === 0"
                   class="flex flex-col items-center justify-center py-16 px-6"
@@ -224,6 +225,7 @@
                   </p>
                 </div>
 
+                <!-- Data Table -->
                 <div
                   v-else
                   class="divide-y divide-gray-200"
@@ -271,7 +273,7 @@
                           </div>
                           <div class="flex flex-col text-xs">
                             <div class="flex items-center gap-1 mb-1">
-                              <UIicon
+                              <UIcon
                                 name="i-lucide-navigation"
                                 class="w-3 h-3 text-gray-400"
                               />
@@ -291,29 +293,29 @@
       </div>
 
       <div class="absolute bottom-2 left-2 z-10">
-        <UCard class="backdrop-blur-xl bg-white/95 shadow-xl">
-          <div class="flex items-center gap-2 mb-3">
+        <div class="p-4 rounded-xl backdrop-blur-xl bg-white/95 shadow-xl">
+          <div class="flex items-center gap-2 mb-2">
             <UIcon
               name="i-lucide-info"
               class="w-4 h-4 text-primary"
             />
             <span class="text-xs font-semibold">Legenda</span>
           </div>
-          <div class="space-y-2">
+          <div class="space-y-1">
             <div class="flex items-center gap-2">
-              <div class="w-3 h-3 rounded-full bg-blue-500" />
+              <div class="w-2.5 h-2.5 rounded-full bg-blue-500" />
               <span class="text-[11px]">Lokasi Saya</span>
             </div>
             <div class="flex items-center gap-2">
-              <div class="w-3 h-3 rounded-full bg-red-500" />
+              <div class="w-2.5 h-2.5 rounded-full bg-primary-500" />
               <span class="text-[11px]">Lokasi Coverage</span>
             </div>
             <div class="flex items-center gap-2">
-              <div class="w-3 h-3 rounded-full border-2 border-blue-500 bg-blue-500/20" />
+              <div class="w-2.5 h-2.5 rounded-full border-2 border-blue-500 bg-blue-500/20" />
               <span class="text-[11px]">Radius</span>
             </div>
           </div>
-        </UCard>
+        </div>
       </div>
 
       <div
