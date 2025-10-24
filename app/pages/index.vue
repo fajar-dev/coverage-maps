@@ -1,15 +1,12 @@
-//pages/index.vue
 <template>
   <div class="h-screen w-screen overflow-hidden">
     <div class="relative w-full h-full">
-      <!-- Map Container -->
       <div
         ref="mapContainer"
         class="absolute inset-0 w-full h-full"
         :class="{ 'cursor-crosshair': isRelocateMode }"
       />
 
-      <!-- Relocate Mode Indicator -->
       <Transition name="fade">
         <div
           v-if="isRelocateMode"
@@ -25,7 +22,7 @@
               />
               <div>
                 <div class="font-semibold">
-                  Mode Pilih Lokasi Aktif
+                  Mode Ubah Lokasi Aktif
                 </div>
                 <div class="text-sm opacity-80">
                   Klik pada peta untuk memilih lokasi baru
@@ -36,7 +33,6 @@
         </div>
       </Transition>
 
-      <!-- Floating Control Panel -->
       <div class="absolute top-2 left-2 z-10">
         <UCard class="w-72 backdrop-blur-xl bg-white/95 shadow-xl">
           <template #header>
@@ -78,7 +74,6 @@
               v-show="isControlOpen"
               class="space-y-4"
             >
-              <!-- Radius Slider -->
               <div class="space-y-2">
                 <div class="flex items-center justify-between">
                   <label class="text-sm font-semibold flex items-center gap-2">
@@ -97,28 +92,13 @@
                   </UBadge>
                 </div>
 
-                <div
-                  class="relative pb-6"
-                  @mousedown="isRadiusDragging = true"
-                  @mouseup="isRadiusDragging = false"
-                  @mouseleave="isRadiusDragging = false"
-                >
+                <div class="relative pb-6">
                   <USlider
                     v-model="radius"
                     :min="1"
                     :max="1000"
                     :step="1"
                   />
-                  <Transition name="fade">
-                    <div
-                      v-if="isRadiusDragging"
-                      class="absolute -top-10 transform -translate-x-1/2 bg-primary text-white px-3 py-1 rounded-lg text-sm font-semibold shadow-lg pointer-events-none"
-                      :style="{ left: `${(radius - 1) / 999 * 100}%` }"
-                    >
-                      {{ radius }}m
-                      <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-primary" />
-                    </div>
-                  </Transition>
                   <div class="absolute top-6 left-0 right-0 flex justify-between text-[10px] text-gray-500 px-1">
                     <span>1m</span><span>250m</span><span>500m</span><span>750m</span><span>1km</span>
                   </div>
@@ -130,7 +110,6 @@
 
               <div class="border-t border-gray-200" />
 
-              <!-- Limit Slider -->
               <div class="space-y-2">
                 <div class="flex items-center justify-between">
                   <label class="text-sm font-semibold flex items-center gap-2">
@@ -149,28 +128,13 @@
                   </UBadge>
                 </div>
 
-                <div
-                  class="relative pb-6"
-                  @mousedown="isLimitDragging = true"
-                  @mouseup="isLimitDragging = false"
-                  @mouseleave="isLimitDragging = false"
-                >
+                <div class="relative pb-6">
                   <USlider
                     v-model="limit"
                     :min="1"
                     :max="100"
                     :step="1"
                   />
-                  <Transition name="fade">
-                    <div
-                      v-if="isLimitDragging"
-                      class="absolute -top-10 transform -translate-x-1/2 bg-green-600 text-white px-3 py-1 rounded-lg text-sm font-semibold shadow-lg pointer-events-none"
-                      :style="{ left: `${(limit - 1) / 99 * 100}%` }"
-                    >
-                      {{ limit }}
-                      <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-green-600" />
-                    </div>
-                  </Transition>
                   <div class="absolute top-6 left-0 right-0 flex justify-between text-[10px] text-gray-500 px-1">
                     <span>1</span><span>25</span><span>50</span><span>75</span><span>100</span>
                   </div>
@@ -199,7 +163,6 @@
         </UCard>
       </div>
 
-      <!-- Relocate Button -->
       <div class="absolute bottom-6 right-15 z-10 flex flex-col gap-2 items-end">
         <div class="flex flex-col gap-2 w-32">
           <UButton
@@ -209,7 +172,7 @@
             :icon="isRelocateMode ? 'i-lucide-x' : 'i-lucide-crosshair'"
             @click="toggleRelocateMode"
           >
-            {{ isRelocateMode ? 'Batal' : 'Pilih Lokasi' }}
+            {{ isRelocateMode ? 'Batal' : 'Ubah Lokasi' }}
           </UButton>
           <UModal>
             <UButton
@@ -225,7 +188,7 @@
             <template #header>
               <div class="flex items-center gap-3">
                 <div class="p-2 bg-primary/10 rounded-lg flex">
-                  <UIcon
+                  <UIicon
                     name="i-lucide-map-pin"
                     class="w-7 h-7 text-primary"
                   />
@@ -243,7 +206,6 @@
 
             <template #body>
               <div class="overflow-y-auto max-h-[calc(70vh-120px)]">
-                <!-- Empty State -->
                 <div
                   v-if="coverageData.length === 0"
                   class="flex flex-col items-center justify-center py-16 px-6"
@@ -262,7 +224,6 @@
                   </p>
                 </div>
 
-                <!-- Data Table -->
                 <div
                   v-else
                   class="divide-y divide-gray-200"
@@ -310,7 +271,7 @@
                           </div>
                           <div class="flex flex-col text-xs">
                             <div class="flex items-center gap-1 mb-1">
-                              <UIcon
+                              <UIicon
                                 name="i-lucide-navigation"
                                 class="w-3 h-3 text-gray-400"
                               />
@@ -329,7 +290,6 @@
         </div>
       </div>
 
-      <!-- Legend Card -->
       <div class="absolute bottom-2 left-2 z-10">
         <UCard class="backdrop-blur-xl bg-white/95 shadow-xl">
           <div class="flex items-center gap-2 mb-3">
@@ -356,7 +316,6 @@
         </UCard>
       </div>
 
-      <!-- Loading Overlay -->
       <div
         v-if="loading"
         class="absolute inset-0 bg-black/20 backdrop-blur-sm z-20 flex items-center justify-center"
@@ -374,6 +333,9 @@
 </template>
 
 <script setup>
+import { getCoverage } from '~/services/coverageService'
+
+const config = useRuntimeConfig()
 const mapContainer = ref(null)
 const map = ref(null)
 const centerMarker = ref(null)
@@ -383,8 +345,6 @@ const activeCircle = ref(null)
 const loading = ref(false)
 const isControlOpen = ref(true)
 const isRelocateMode = ref(false)
-const isRadiusDragging = ref(false)
-const isLimitDragging = ref(false)
 const latitude = ref(3.576378)
 const longitude = ref(98.682272)
 const radius = ref(500)
@@ -482,13 +442,19 @@ async function fetchCoverage() {
     markers.value.forEach(m => m.setMap(null))
     markers.value = []
 
-    const url = `http://127.0.0.1:3333/coverage?longitude=${longitude.value}&latitude=${latitude.value}&radius=${radius.value}&limit=${limit.value}`
-    const res = await fetch(url)
-    const json = await res.json()
-    if (!json.success || !json.data) return
+    const response = await getCoverage(config.public.apiUrl, {
+      longitude: longitude.value,
+      latitude: latitude.value,
+      radius: radius.value,
+      limit: limit.value
+    })
 
-    // Simpan data untuk modal
-    coverageData.value = json.data
+    if (!response?.success || !response.data) {
+      coverageData.value = []
+      return
+    }
+
+    coverageData.value = response.data
 
     const center = { lat: latitude.value, lng: longitude.value }
     activeCircle.value = new google.maps.Circle({
@@ -503,7 +469,7 @@ async function fetchCoverage() {
       clickable: false
     })
 
-    json.data.forEach((item, index) => {
+    response.data.forEach((item, index) => {
       const [lat, lng] = item.homepassedCoordinate.split(',').map(Number)
       const marker = new google.maps.Marker({
         position: { lat, lng },
@@ -517,7 +483,7 @@ async function fetchCoverage() {
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
           scale: 12,
-          fillColor: '#EF4444',
+          fillColor: '#00c951',
           fillOpacity: 1,
           strokeColor: '#fff',
           strokeWeight: 2
@@ -544,15 +510,16 @@ async function fetchCoverage() {
       markers.value.push(marker)
     })
   } catch (e) {
-    console.error('Gagal memuat data coverage:', e)
+    console.error('Failed to fetch coverage data:', e)
+    coverageData.value = []
   } finally {
     loading.value = false
   }
 }
 
 function focusOnMarker(index) {
-  if (markers.value[index]) {
-    const marker = markers.value[index]
+  const marker = markers.value[index]
+  if (marker) {
     map.value.setCenter(marker.getPosition())
     map.value.setZoom(18)
     google.maps.event.trigger(marker, 'click')
