@@ -21,10 +21,10 @@
                 class="w-6 h-6 text-primary animate-bounce"
               />
               <div>
-                <div class="font-semibold">
+                <div class="font-semibold text-sm">
                   Mode Ubah Lokasi Aktif
                 </div>
-                <div class="text-sm opacity-80">
+                <div class="opacity-80 text-xs">
                   Klik pada peta atau cari lokasi di form pencarian
                 </div>
               </div>
@@ -72,14 +72,6 @@
                   class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 cursor-pointer hover:text-gray-600"
                   @click="clearSearch"
                 />
-              </div>
-
-              <div class="flex items-center gap-2 text-xs text-gray-500">
-                <UIcon
-                  name="i-lucide-info"
-                  class="w-3 h-3"
-                />
-                <span>Pilih lokasi dari hasil pencarian atau klik langsung di peta</span>
               </div>
             </div>
           </UCard>
@@ -140,7 +132,7 @@
                     Coverage Map
                   </h2>
                   <p class="text-[10px] text-gray-500">
-                    Fiberstar home pass coverage
+                    Nusanet Fiber Coverage
                   </p>
                 </div>
               </div>
@@ -379,8 +371,20 @@
         </div>
       </div>
 
-      <div class="absolute bottom-2 left-2 z-10">
-        <div class="p-4 rounded-xl backdrop-blur-xl bg-white/95 shadow-xl">
+      <div
+        v-if="showLegend"
+        class="absolute bottom-2 left-2 z-10"
+      >
+        <div class="relative p-4 rounded-xl backdrop-blur-xl bg-white/95 shadow-xl">
+          <button
+            class="absolute top-2 right-2 w-5 h-5 flex items-center justify-center text-gray-500 hover:text-gray-700"
+            @click="showLegend = false"
+          >
+            <UIcon
+              name="i-lucide-x"
+              class="w-4 h-4"
+            />
+          </button>
           <div class="flex items-center gap-2 mb-2">
             <UIcon
               name="i-lucide-info"
@@ -439,6 +443,7 @@ const longitude = ref(98.682272)
 const radius = ref(500)
 const limit = ref(10)
 const coverageData = ref([])
+const showLegend = ref(true)
 
 const searchQuery = ref('')
 const searchSuggestions = ref([])
