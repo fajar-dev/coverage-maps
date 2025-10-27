@@ -2,7 +2,9 @@
   <div class="h-screen w-screen overflow-hidden">
     <div class="relative w-full h-full">
       <div
+        v-if="mapLoaded"
         ref="mapContainer"
+        :key="mapReloadKey"
         class="absolute inset-0 w-full h-full"
         :class="{ 'cursor-crosshair': isRelocateMode }"
       />
@@ -115,7 +117,7 @@
       </Transition>
 
       <div class="absolute top-2 left-2 z-10">
-        <UCard class="w-70 backdrop-blur-xl bg-white/95 shadow-xl">
+        <UCard class="w-80 backdrop-blur-xl bg-white/95 shadow-xl">
           <template #header>
             <button
               class="w-full flex items-center justify-between gap-2 hover:opacity-80 transition-opacity"
@@ -153,79 +155,85 @@
           >
             <div
               v-show="isControlOpen"
-              class="space-y-3"
+              class="space-y-5"
             >
-              <div class="space-y-2">
-                <div class="flex items-center justify-between">
-                  <label class="text-sm font-semibold flex items-center gap-2">
-                    <UIcon
-                      name="i-lucide-circle-dot"
-                      class="w-4 h-4 text-primary"
-                    />
-                    Radius Pencarian
-                  </label>
-                  <UBadge
-                    color="primary"
-                    variant="soft"
-                    size="sm"
-                  >
-                    {{ radius }} m
-                  </UBadge>
-                </div>
+              <UTabs
+                :items="tabs"
+                size="xs"
+              >
+                <template #data>
+                  <div class="space-y-2 mt-5">
+                    <div class="flex items-center justify-between">
+                      <label class="text-sm font-semibold flex items-center gap-2">
+                        <UIcon
+                          name="i-lucide-layers"
+                          class="w-4 h-4 text-green-600"
+                        />
+                        Maksimal Data
+                      </label>
+                      <UBadge
+                        color="primary"
+                        variant="soft"
+                        size="sm"
+                      >
+                        {{ pendingLimit }}
+                      </UBadge>
+                    </div>
 
-                <div class="relative pb-6">
-                  <USlider
-                    v-model="radius"
-                    :min="1"
-                    :max="1000"
-                    :step="1"
-                  />
-                  <div class="absolute top-6 left-0 right-0 flex justify-between text-[10px] text-gray-500 px-1">
-                    <span>1m</span><span>250m</span><span>500m</span><span>750m</span><span>1km</span>
+                    <div class="relative pb-6">
+                      <USlider
+                        v-model="pendingLimit"
+                        :min="1"
+                        :max="100"
+                        :step="1"
+                      />
+                      <div class="absolute top-6 left-0 right-0 flex justify-between text-[10px] text-gray-500 px-1">
+                        <span>1</span><span>25</span><span>50</span><span>75</span><span>100</span>
+                      </div>
+                    </div>
+
+                    <p class="text-[11px] text-gray-500">
+                      Jumlah maksimal titik coverage yang akan ditampilkan
+                    </p>
                   </div>
-                </div>
-                <p class="text-[11px] text-gray-500">
-                  Jarak maksimal dari lokasi saya untuk mencari lokasi coverage
-                </p>
-              </div>
+                </template>
 
-              <div class="border-t border-gray-200" />
+                <template #radius>
+                  <div class="space-y-2 mt-5">
+                    <div class="flex items-center justify-between">
+                      <label class="text-sm font-semibold flex items-center gap-2">
+                        <UIcon
+                          name="i-lucide-circle-dot"
+                          class="w-4 h-4 text-primary"
+                        />
+                        Radius Pencarian
+                      </label>
+                      <UBadge
+                        color="primary"
+                        variant="soft"
+                        size="sm"
+                      >
+                        {{ pendingRadius }} m
+                      </UBadge>
+                    </div>
 
-              <div class="space-y-2">
-                <div class="flex items-center justify-between">
-                  <label class="text-sm font-semibold flex items-center gap-2">
-                    <UIcon
-                      name="i-lucide-layers"
-                      class="w-4 h-4 text-green-600"
-                    />
-                    Maksimal Data
-                  </label>
-                  <UBadge
-                    color="primary"
-                    variant="soft"
-                    size="sm"
-                  >
-                    {{ limit }}
-                  </UBadge>
-                </div>
-
-                <div class="relative pb-6">
-                  <USlider
-                    v-model="limit"
-                    :min="1"
-                    :max="100"
-                    :step="1"
-                  />
-                  <div class="absolute top-6 left-0 right-0 flex justify-between text-[10px] text-gray-500 px-1">
-                    <span>1</span><span>25</span><span>50</span><span>75</span><span>100</span>
+                    <div class="relative pb-6">
+                      <USlider
+                        v-model="pendingRadius"
+                        :min="1"
+                        :max="1000"
+                        :step="1"
+                      />
+                      <div class="absolute top-6 left-0 right-0 flex justify-between text-[10px] text-gray-500 px-1">
+                        <span>1m</span><span>250m</span><span>500m</span><span>750m</span><span>1km</span>
+                      </div>
+                    </div>
+                    <p class="text-[11px] text-gray-500">
+                      Jarak maksimal dari lokasi saya untuk mencari lokasi coverage
+                    </p>
                   </div>
-                </div>
-
-                <p class="text-[11px] text-gray-500">
-                  Jumlah maksimal titik coverage yang akan ditampilkan
-                </p>
-              </div>
-
+                </template>
+              </UTabs>
               <div class="border-t border-gray-200" />
 
               <UButton
@@ -235,13 +243,23 @@
                 icon="i-lucide-refresh-cw"
                 :loading="loading"
                 class="font-semibold"
-                @click="fetchCoverage"
+                @click="hardResetMap"
               >
                 Muat Ulang
               </UButton>
             </div>
           </Transition>
         </UCard>
+      </div>
+
+      <div class="absolute bottom-50 right-3 z-10 flex flex-col gap-2 items-end">
+        <UButton
+          icon="i-lucide-map-pinned"
+          size="xl"
+          class="bg-white text-gray-500 shadow hover:bg-gray-100 hover:text-gray-700 active:bg-gray-100 active:text-gray-700"
+          variant="solid"
+          @click="returnToOriginalLocation"
+        />
       </div>
 
       <div class="absolute bottom-6 right-15 z-10 flex flex-col gap-2 items-end">
@@ -251,6 +269,7 @@
             variant="solid"
             size="md"
             :icon="isRelocateMode ? 'i-lucide-x' : 'i-lucide-crosshair'"
+            class="shadow"
             @click="toggleRelocateMode"
           >
             {{ isRelocateMode ? 'Batal' : 'Ubah Lokasi' }}
@@ -260,7 +279,7 @@
               color="primary"
               variant="subtle"
               size="md"
-              class="bg-white"
+              class="bg-white shadow"
               icon="i-lucide-list"
             >
               Lihat Hasil
@@ -426,6 +445,7 @@
 </template>
 
 <script setup>
+import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { getCoverage } from '~/services/coverageService'
 
 const config = useRuntimeConfig()
@@ -438,26 +458,99 @@ const activeCircle = ref(null)
 const loading = ref(false)
 const isControlOpen = ref(true)
 const isRelocateMode = ref(false)
+
+const tabs = [
+  {
+    label: 'Maksimal Data',
+    icon: 'i-lucide-layers',
+    slot: 'data'
+  },
+  {
+    label: 'Radius Pencarian',
+    icon: 'i-lucide-circle-dot',
+    slot: 'radius'
+  }
+]
+
 const latitude = ref(3.576378)
 const longitude = ref(98.682272)
-const radius = ref(500)
-const limit = ref(10)
+const originalLatitude = ref(3.576378)
+const originalLongitude = ref(98.682272)
+
+const activeRadius = ref(500)
+const activeLimit = ref(10)
+
+const pendingRadius = ref(500)
+const pendingLimit = ref(10)
+
 const coverageData = ref([])
 const showLegend = ref(true)
-
 const searchQuery = ref('')
 const searchSuggestions = ref([])
 const showSuggestions = ref(false)
 const autocompleteService = ref(null)
 const placesService = ref(null)
+
+const mapLoaded = ref(false)
+const mapReloadKey = ref(0)
+const hasLocationBeenSet = ref(false)
+
 let searchTimeout = null
 let mapClickListener = null
 
-onMounted(() => waitForGoogle())
+onMounted(() => hardResetMap(true))
 onBeforeUnmount(() => {
   if (mapClickListener) google.maps.event.removeListener(mapClickListener)
   if (searchTimeout) clearTimeout(searchTimeout)
 })
+
+async function hardResetMap(isInitialLoad = false) {
+  if (loading.value) return
+
+  activeRadius.value = pendingRadius.value
+  activeLimit.value = pendingLimit.value
+
+  mapLoaded.value = false
+  mapReloadKey.value++
+
+  await nextTick()
+  mapLoaded.value = true
+  await nextTick()
+
+  if (isInitialLoad && !hasLocationBeenSet.value && navigator.geolocation) {
+    try {
+      const pos = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 })
+      })
+      latitude.value = pos.coords.latitude
+      longitude.value = pos.coords.longitude
+      originalLatitude.value = pos.coords.latitude
+      originalLongitude.value = pos.coords.longitude
+      hasLocationBeenSet.value = true
+    } catch (error) {
+      console.error('Geolocation failed:', error)
+      hasLocationBeenSet.value = true
+    }
+  }
+  waitForGoogle()
+}
+
+async function updateMapLocation() {
+  hasLocationBeenSet.value = true
+
+  mapLoaded.value = false
+  mapReloadKey.value++
+  await nextTick()
+  mapLoaded.value = true
+  await nextTick()
+  waitForGoogle()
+}
+
+function returnToOriginalLocation() {
+  latitude.value = originalLatitude.value
+  longitude.value = originalLongitude.value
+  updateMapLocation()
+}
 
 function waitForGoogle() {
   if (window.google?.maps?.places) initMap()
@@ -466,6 +559,9 @@ function waitForGoogle() {
 
 function initMap() {
   const center = { lat: latitude.value, lng: longitude.value }
+
+  if (!mapContainer.value) return
+
   map.value = new google.maps.Map(mapContainer.value, {
     center,
     zoom: 16,
@@ -485,32 +581,19 @@ function initMap() {
     placesService.value = new google.maps.places.PlacesService(map.value)
   }
 
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        latitude.value = pos.coords.latitude
-        longitude.value = pos.coords.longitude
-        map.value.setCenter({ lat: latitude.value, lng: longitude.value })
-        setCenterMarker()
-        fetchCoverage()
-      },
-      () => {
-        setCenterMarker()
-        fetchCoverage()
-      }
-    )
-  } else {
-    setCenterMarker()
-    fetchCoverage()
-  }
+  map.value.setCenter(center)
+  setCenterMarker()
+  fetchCoverage()
 
+  if (mapClickListener) google.maps.event.removeListener(mapClickListener)
   mapClickListener = map.value.addListener('click', (e) => {
     if (isRelocateMode.value) {
       latitude.value = e.latLng.lat()
       longitude.value = e.latLng.lng()
       map.value.setCenter(e.latLng)
-      setCenterMarker()
-      fetchCoverage()
+
+      updateMapLocation()
+
       isRelocateMode.value = false
     } else if (activeInfoWindow.value) {
       activeInfoWindow.value.close()
@@ -536,14 +619,12 @@ function onSearchInput() {
 }
 
 function searchPlaces() {
-  if (!autocompleteService.value || !searchQuery.value) {
-    return
-  }
+  if (!autocompleteService.value || !searchQuery.value || !map.value) return
 
   const request = {
     input: searchQuery.value,
     componentRestrictions: { country: 'id' },
-    location: new google.maps.LatLng(latitude.value, longitude.value),
+    location: map.value.getCenter(),
     radius: 50000
   }
 
@@ -575,11 +656,7 @@ function selectSuggestion(suggestion) {
       latitude.value = location.lat()
       longitude.value = location.lng()
 
-      map.value.setCenter(location)
-      map.value.setZoom(16)
-
-      setCenterMarker()
-      fetchCoverage()
+      updateMapLocation()
 
       isRelocateMode.value = false
     }
@@ -602,7 +679,7 @@ function setCenterMarker() {
     icon: {
       path: google.maps.SymbolPath.CIRCLE,
       scale: 12,
-      fillColor: '#3B82F6',
+      fillColor: '#00c951',
       fillOpacity: 1,
       strokeColor: '#ffffff',
       strokeWeight: 3
@@ -614,16 +691,17 @@ async function fetchCoverage() {
   if (loading.value) return
   loading.value = true
   try {
-    if (activeInfoWindow.value) activeInfoWindow.value.close()
     if (activeCircle.value) activeCircle.value.setMap(null)
     markers.value.forEach(m => m.setMap(null))
+    activeInfoWindow.value = null
+    activeCircle.value = null
     markers.value = []
 
     const response = await getCoverage(config.public.apiUrl, {
       longitude: longitude.value,
       latitude: latitude.value,
-      radius: radius.value,
-      limit: limit.value
+      radius: activeRadius.value,
+      limit: activeLimit.value
     })
 
     if (!response?.success || !response.data) {
@@ -635,32 +713,27 @@ async function fetchCoverage() {
 
     const center = { lat: latitude.value, lng: longitude.value }
     activeCircle.value = new google.maps.Circle({
-      strokeColor: '#3B82F6',
+      strokeColor: '#00c951',
       strokeOpacity: 0.8,
       strokeWeight: 2,
-      fillColor: '#3B82F6',
+      fillColor: '#75EDAE',
       fillOpacity: 0.15,
       map: map.value,
       center,
-      radius: radius.value,
+      radius: activeRadius.value,
       clickable: false
     })
 
-    response.data.forEach((item, index) => {
+    response.data.forEach((item) => {
       const [lat, lng] = item.homepassedCoordinate.split(',').map(Number)
       const marker = new google.maps.Marker({
         position: { lat, lng },
         map: map.value,
-        label: {
-          text: (index + 1).toString(),
-          color: '#fff',
-          fontSize: '12px',
-          fontWeight: 'bold'
-        },
+        title: item.residentName,
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
           scale: 12,
-          fillColor: '#00c951',
+          fillColor: '#f37336',
           fillOpacity: 1,
           strokeColor: '#fff',
           strokeWeight: 2
@@ -670,12 +743,11 @@ async function fetchCoverage() {
       const info = new google.maps.InfoWindow({
         content: `
           <div style="padding:10px;font-family:system-ui">
-            <div style="font-size:15px;font-weight:600;margin-bottom:4px">#${index + 1} - ${item.residentName}</div>
-            <div style="font-size:13px;color:#6B7280">${item.streetName} No. ${item.no}</div>
-            <div style="margin-top:6px;font-size:12px;color:#374151">
-              ID: <strong>${item.id}</strong> |
-              Jarak: <strong style="color:#00c951">${item.distance.toFixed(0)}m</strong>
-            </div>
+          <div style="font-size:15px;font-weight:600;margin-bottom:4px">${item.residentName}</div>
+          <div style="font-size:13px;color:#6B7280">${item.streetName} No. ${item.no}</div>
+          <div style="margin-top:6px;font-size:12px;color:#374151">
+          ID: <strong>${item.id}</strong> |
+          Jarak: <strong style="color:#00c951">${item.distance.toFixed(0)}m</strong>
           </div>
         `
       })
@@ -695,7 +767,7 @@ async function fetchCoverage() {
 
 function focusOnMarker(index) {
   const marker = markers.value[index]
-  if (marker) {
+  if (marker && map.value) {
     map.value.setCenter(marker.getPosition())
     map.value.setZoom(18)
     google.maps.event.trigger(marker, 'click')
