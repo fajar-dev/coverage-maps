@@ -6,7 +6,7 @@
         ref="mapContainer"
         :key="mapReloadKey"
         class="absolute inset-0 w-full h-full"
-        :class="{ 'cursor-crosshair': isRelocateMode }"
+        :class="{ 'cursor-crosshair': isRelocateMode || isMeasureMode }"
       />
 
       <Transition name="fade">
@@ -34,7 +34,6 @@
           </UCard>
         </div>
       </Transition>
-
       <Transition
         enter-active-class="transition-all duration-300 ease-out"
         enter-from-class="opacity-0 -translate-y-4"
@@ -252,14 +251,36 @@
         </UCard>
       </div>
 
-      <div class="absolute bottom-50 right-3 z-10 flex flex-col gap-2 items-end">
+      <div class="absolute bottom-50 right-3 z-10 flex flex-col gap-3 items-end">
         <UButton
           icon="i-lucide-map-pinned"
           size="xl"
-          class="bg-white text-gray-500 shadow hover:bg-gray-100 hover:text-gray-700 active:bg-gray-100 active:text-gray-700"
+          class="w-12 h-12 flex items-center justify-center bg-white text-gray-600 shadow-md rounded-full hover:bg-gray-100 hover:text-gray-800 transition"
           variant="solid"
           @click="returnToOriginalLocation"
         />
+
+        <div class="flex items-center gap-2">
+          <Transition name="fade">
+            <div
+              v-if="isMeasureMode"
+              class="bg-green-500 text-white text-xs font-medium py-1 px-2 rounded-md shadow-md whitespace-nowrap"
+            >
+              {{ totalDistance }}
+            </div>
+          </Transition>
+
+          <UButton
+            icon="i-lucide-ruler"
+            size="xl"
+            class="w-12 h-12 flex items-center justify-center shadow-md rounded-full transition"
+            :class="isMeasureMode
+              ? 'bg-green-500 text-white hover:bg-green-600'
+              : 'bg-white text-gray-600 hover:bg-gray-100 hover:text-gray-800'"
+            variant="solid"
+            @click="toggleMeasureMode"
+          />
+        </div>
       </div>
 
       <div class="absolute bottom-6 right-15 z-10 flex flex-col gap-2 items-end">
@@ -458,18 +479,15 @@ const activeCircle = ref(null)
 const loading = ref(false)
 const isControlOpen = ref(true)
 const isRelocateMode = ref(false)
+const isMeasureMode = ref(false)
+const measurePoints = ref([])
+const measureMarkers = ref([])
+const measurePolyline = ref(null)
+const totalDistance = ref('0m')
 
 const tabs = [
-  {
-    label: 'Maksimal Data',
-    icon: 'i-lucide-layers',
-    slot: 'data'
-  },
-  {
-    label: 'Radius Pencarian',
-    icon: 'i-lucide-circle-dot',
-    slot: 'radius'
-  }
+  { label: 'Maksimal Data', icon: 'i-lucide-layers', slot: 'data' },
+  { label: 'Radius Pencarian', icon: 'i-lucide-circle-dot', slot: 'radius' }
 ]
 
 const latitude = ref(3.576378)
@@ -502,6 +520,7 @@ onMounted(() => hardResetMap(true))
 onBeforeUnmount(() => {
   if (mapClickListener) google.maps.event.removeListener(mapClickListener)
   if (searchTimeout) clearTimeout(searchTimeout)
+  clearMeasurement()
 })
 
 async function hardResetMap(isInitialLoad = false) {
@@ -527,8 +546,7 @@ async function hardResetMap(isInitialLoad = false) {
       originalLatitude.value = pos.coords.latitude
       originalLongitude.value = pos.coords.longitude
       hasLocationBeenSet.value = true
-    } catch (error) {
-      console.error('Geolocation failed:', error)
+    } catch {
       hasLocationBeenSet.value = true
     }
   }
@@ -595,6 +613,8 @@ function initMap() {
       updateMapLocation()
 
       isRelocateMode.value = false
+    } else if (isMeasureMode.value) {
+      addMeasurePoint(e.latLng)
     } else if (activeInfoWindow.value) {
       activeInfoWindow.value.close()
     }
@@ -603,7 +623,113 @@ function initMap() {
 
 function toggleRelocateMode() {
   isRelocateMode.value = !isRelocateMode.value
-  if (isRelocateMode.value) clearSearch()
+  if (isRelocateMode.value) {
+    clearSearch()
+    if (isMeasureMode.value) {
+      isMeasureMode.value = false
+      clearMeasurement()
+    }
+  }
+}
+
+async function toggleMeasureMode() {
+  isMeasureMode.value = !isMeasureMode.value
+  if (isMeasureMode.value) {
+    if (isRelocateMode.value) {
+      isRelocateMode.value = false
+      clearSearch()
+    }
+    clearMeasurement()
+  } else {
+    clearMeasurement()
+    await updateMapLocation()
+  }
+}
+
+function addMeasurePoint(latLng) {
+  if (!isMeasureMode.value) return
+
+  measurePoints.value.push(latLng)
+
+  const marker = new google.maps.Marker({
+    position: latLng,
+    map: map.value,
+    icon: {
+      path: google.maps.SymbolPath.CIRCLE,
+      scale: 8,
+      fillColor: '#000000',
+      fillOpacity: 1,
+      strokeColor: '#ffffff',
+      strokeWeight: 2
+    },
+    zIndex: 1000
+  })
+  measureMarkers.value.push(marker)
+
+  if (measurePolyline.value) {
+    measurePolyline.value.setPath(measurePoints.value)
+  } else {
+    measurePolyline.value = new google.maps.Polyline({
+      path: measurePoints.value,
+      geodesic: true,
+      strokeColor: '#FF6B35',
+      strokeOpacity: 1,
+      strokeWeight: 3,
+      map: map.value,
+      icons: [{
+        icon: {
+          path: 'M 0,-1 0,1',
+          strokeOpacity: 1,
+          scale: 3
+        },
+        offset: '0',
+        repeat: '20px'
+      }]
+    })
+  }
+
+  calculateDistance()
+}
+
+function calculateDistance() {
+  if (measurePoints.value.length < 2) {
+    totalDistance.value = '0m'
+    return
+  }
+
+  let distance = 0
+  for (let i = 0; i < measurePoints.value.length - 1; i++) {
+    distance += google.maps.geometry.spherical.computeDistanceBetween(
+      measurePoints.value[i],
+      measurePoints.value[i + 1]
+    )
+  }
+
+  if (distance >= 1000) {
+    totalDistance.value = (distance / 1000).toFixed(2) + 'km'
+  } else {
+    totalDistance.value = Math.round(distance) + 'm'
+  }
+}
+
+function clearMeasurement() {
+  if (measurePolyline.value) {
+    measurePolyline.value.setMap(null)
+    measurePolyline.value = null
+  }
+
+  measurePoints.value = []
+
+  if (measureMarkers.value && measureMarkers.value.length > 0) {
+    measureMarkers.value.forEach((marker) => {
+      if (marker && marker.setMap) {
+        marker.setMap(null)
+      }
+    })
+  }
+  measureMarkers.value = []
+
+  totalDistance.value = '0m'
 }
 
 function onSearchInput() {
@@ -696,6 +822,7 @@ async function fetchCoverage() {
     activeInfoWindow.value = null
     activeCircle.value = null
     markers.value = []
+    coverageData.value = []
 
     const response = await getCoverage(config.public.apiUrl, {
       longitude: longitude.value,
@@ -705,7 +832,6 @@ async function fetchCoverage() {
     })
 
     if (!response?.success || !response.data) {
-      coverageData.value = []
       return
     }
 
