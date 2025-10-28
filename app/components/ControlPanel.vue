@@ -1,17 +1,18 @@
 <template>
   <div class="absolute top-2 left-2 z-10">
-    <UCard class="w-70 backdrop-blur-xl bg-white/95 shadow-xl">
+    <UCard class="w-80 backdrop-blur-xl bg-white/95 shadow-xl">
       <template #header>
         <button
           class="w-full flex items-center justify-between gap-2 hover:opacity-80 transition-opacity"
-          @click="isOpen = !isOpen"
+          @click="$emit('toggle')"
         >
           <div class="flex items-center gap-2">
             <img
-              src="https://www.nusa.net.id/kb/favicon.png"
+              src="/nusanet.png"
               alt="Logo"
               class="w-7 h-7"
             >
+
             <div class="text-left">
               <h2 class="text-sm font-semibold">
                 Coverage Map
@@ -38,87 +39,91 @@
       >
         <div
           v-show="isOpen"
-          class="space-y-3"
+          class="space-y-2"
         >
-          <!-- Radius -->
-          <div class="space-y-2">
-            <div class="flex items-center justify-between">
-              <label class="text-sm font-semibold flex items-center gap-2">
-                <UIcon
-                  name="i-lucide-circle-dot"
-                  class="w-4 h-4 text-primary"
-                />
-                Radius Pencarian
-              </label>
-              <UBadge
-                color="primary"
-                variant="soft"
-                size="sm"
-              >
-                {{ radius }} m
-              </UBadge>
-            </div>
+          <UTabs
+            :model-value="activeTab"
+            :items="tabs"
+            size="xs"
+            @update:model-value="$emit('update:activeTab', $event)"
+          >
+            <template #radius>
+              <div class="space-y-2 mt-2">
+                <div class="flex items-center justify-between">
+                  <label class="text-sm font-semibold flex items-center gap-2">
+                    <UIcon
+                      name="i-lucide-circle-dot"
+                      class="w-4 h-4 text-primary"
+                    />
+                    Radius Pencarian
+                  </label>
+                  <UBadge
+                    color="primary"
+                    variant="soft"
+                    size="sm"
+                  >
+                    {{ radius >= 1000 ? (radius / 1000).toFixed(1) + ' km' : radius + ' m' }}
+                  </UBadge>
+                </div>
 
-            <div class="relative pb-6">
-              <USlider
-                v-model="radiusModel"
-                :min="1"
-                :max="1000"
-                :step="1"
-              />
-              <div
-                class="absolute top-6 left-0 right-0 flex justify-between text-[10px] text-gray-500 px-1"
-              >
-                <span>1m</span><span>250m</span><span>500m</span><span>750m</span><span>1km</span>
+                <div class="relative pb-6">
+                  <USlider
+                    :model-value="radius"
+                    :min="1"
+                    :max="10000"
+                    :step="10"
+                    @update:model-value="$emit('update:radius', $event)"
+                  />
+                  <div class="absolute top-6 left-0 right-0 flex justify-between text-[10px] text-gray-500 px-1">
+                    <span>1m</span><span>2.5km</span><span>5km</span><span>7.5km</span><span>10km</span>
+                  </div>
+                </div>
+                <p class="text-[11px] text-gray-500">
+                  Jarak maksimal dari lokasi saya untuk mencari lokasi coverage
+                </p>
               </div>
-            </div>
-            <p class="text-[11px] text-gray-500">
-              Jarak maksimal dari lokasi saya untuk mencari lokasi coverage
-            </p>
-          </div>
+            </template>
+            <template #limit>
+              <div class="space-y-2 mt-2">
+                <div class="flex items-center justify-between">
+                  <label class="text-sm font-semibold flex items-center gap-2">
+                    <UIcon
+                      name="i-lucide-layers"
+                      class="w-4 h-4 text-green-600"
+                    />
+                    Maksimal Data
+                  </label>
+                  <UBadge
+                    color="primary"
+                    variant="soft"
+                    size="sm"
+                  >
+                    {{ limit }}
+                  </UBadge>
+                </div>
+
+                <div class="relative pb-6">
+                  <USlider
+                    :model-value="limit"
+                    :min="1"
+                    :max="1000"
+                    :step="1"
+                    @update:model-value="$emit('update:limit', $event)"
+                  />
+                  <div class="absolute top-6 left-0 right-0 flex justify-between text-[10px] text-gray-500 px-1">
+                    <span>1</span><span>250</span><span>500</span><span>750</span><span>1000</span>
+                  </div>
+                </div>
+
+                <p class="text-[11px] text-gray-500">
+                  Jumlah maksimal titik coverage yang akan ditampilkan
+                </p>
+              </div>
+            </template>
+          </UTabs>
 
           <div class="border-t border-gray-200" />
 
-          <!-- Limit -->
-          <div class="space-y-2">
-            <div class="flex items-center justify-between">
-              <label class="text-sm font-semibold flex items-center gap-2">
-                <UIcon
-                  name="i-lucide-layers"
-                  class="w-4 h-4 text-green-600"
-                />
-                Maksimal Data
-              </label>
-              <UBadge
-                color="primary"
-                variant="soft"
-                size="sm"
-              >
-                {{ limit }}
-              </UBadge>
-            </div>
-
-            <div class="relative pb-6">
-              <USlider
-                v-model="limitModel"
-                :min="1"
-                :max="100"
-                :step="1"
-              />
-              <div
-                class="absolute top-6 left-0 right-0 flex justify-between text-[10px] text-gray-500 px-1"
-              >
-                <span>1</span><span>25</span><span>50</span><span>75</span><span>100</span>
-              </div>
-            </div>
-            <p class="text-[11px] text-gray-500">
-              Jumlah maksimal titik coverage yang akan ditampilkan
-            </p>
-          </div>
-
-          <div class="border-t border-gray-200" />
-
-          <!-- Reload -->
           <UButton
             color="primary"
             size="sm"
@@ -137,23 +142,33 @@
 </template>
 
 <script setup>
-const props = defineProps({
-  radius: Number,
-  limit: Number,
-  loading: Boolean
+defineProps({
+  isOpen: {
+    type: Boolean,
+    default: true
+  },
+  activeTab: {
+    type: String,
+    default: 'radius'
+  },
+  radius: {
+    type: Number,
+    default: 1000
+  },
+  limit: {
+    type: Number,
+    default: 100
+  },
+  loading: {
+    type: Boolean,
+    default: false
+  }
 })
 
-const emits = defineEmits(['update:radius', 'update:limit', 'reload'])
-const isOpen = ref(true)
+defineEmits(['toggle', 'update:activeTab', 'update:radius', 'update:limit', 'reload'])
 
-// ✅ buat computed getter/setter agar v-model bisa tetap dipakai
-const radiusModel = computed({
-  get: () => props.radius,
-  set: val => emits('update:radius', val)
-})
-
-const limitModel = computed({
-  get: () => props.limit,
-  set: val => emits('update:limit', val)
-})
+const tabs = [
+  { label: 'Radius Pencarian', icon: 'i-lucide-circle-dot', value: 'radius', slot: 'radius' },
+  { label: 'Maksimal Data', icon: 'i-lucide-layers', value: 'limit', slot: 'limit' }
+]
 </script>
