@@ -124,10 +124,11 @@
             >
               <div class="flex items-center gap-2">
                 <img
-                  src="https://www.nusa.net.id/kb/favicon.png"
+                  src="/nusanet.png"
                   alt="Logo"
                   class="w-7 h-7"
                 >
+
                 <div class="text-left">
                   <h2 class="text-sm font-semibold">
                     Coverage Map
@@ -506,6 +507,8 @@
 </template>
 
 <script setup>
+const config = useRuntimeConfig()
+
 const mapContainer = ref(null)
 const map = ref(null)
 const centerMarker = ref(null)
@@ -978,7 +981,7 @@ async function fetchCoverage() {
 
     coverageData.value = []
 
-    let url = `http://127.0.0.1:3333/coverage?longitude=${longitude.value}&latitude=${latitude.value}`
+    let url = `${config.public.apiUrl}/coverage?longitude=${longitude.value}&latitude=${latitude.value}`
 
     if (activeTab.value === 'radius') {
       url += `&radius=${activeRadius.value}`
