@@ -1,4 +1,3 @@
-//pages/index.vue
 <template>
   <div class="h-screen w-screen overflow-hidden">
     <div class="relative w-full h-full">
@@ -546,7 +545,7 @@ async function fetchCoverage() {
 
     coverageData.value = data
 
-    if (activeTab.value === 'radius' && data.length > 0) {
+    if (activeTab.value === 'radius') {
       const center = { lat: latitude.value, lng: longitude.value }
       activeCircle.value = new google.maps.Circle({
         strokeColor: '#00c951',
