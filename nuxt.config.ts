@@ -6,6 +6,10 @@ export default defineNuxtConfig({
     enabled: true
   },
 
+  app: {
+    baseURL: process.env.NUXT_PUBLIC_SITE_PATH || '/'
+  },
+
   css: ['~/assets/css/main.css'],
   colorMode: {
     preference: 'light'
