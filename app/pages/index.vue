@@ -154,14 +154,50 @@
           >
             <div
               v-show="isControlOpen"
-              class="space-y-5"
+              class="space-y-2"
             >
               <UTabs
+                v-model="activeTab"
                 :items="tabs"
                 size="xs"
               >
-                <template #data>
-                  <div class="space-y-2 mt-5">
+                <template #radius>
+                  <div class="space-y-2 mt-2">
+                    <div class="flex items-center justify-between">
+                      <label class="text-sm font-semibold flex items-center gap-2">
+                        <UIcon
+                          name="i-lucide-circle-dot"
+                          class="w-4 h-4 text-primary"
+                        />
+                        Radius Pencarian
+                      </label>
+                      <UBadge
+                        color="primary"
+                        variant="soft"
+                        size="sm"
+                      >
+                        {{ pendingRadius >= 1000 ? (pendingRadius / 1000).toFixed(1) + ' km' : pendingRadius + ' m' }}
+                      </UBadge>
+                    </div>
+
+                    <div class="relative pb-6">
+                      <USlider
+                        v-model="pendingRadius"
+                        :min="1"
+                        :max="10000"
+                        :step="10"
+                      />
+                      <div class="absolute top-6 left-0 right-0 flex justify-between text-[10px] text-gray-500 px-1">
+                        <span>1m</span><span>2.5km</span><span>5km</span><span>7.5km</span><span>10km</span>
+                      </div>
+                    </div>
+                    <p class="text-[11px] text-gray-500">
+                      Jarak maksimal dari lokasi saya untuk mencari lokasi coverage
+                    </p>
+                  </div>
+                </template>
+                <template #limit>
+                  <div class="space-y-2 mt-2">
                     <div class="flex items-center justify-between">
                       <label class="text-sm font-semibold flex items-center gap-2">
                         <UIcon
@@ -183,11 +219,11 @@
                       <USlider
                         v-model="pendingLimit"
                         :min="1"
-                        :max="100"
+                        :max="1000"
                         :step="1"
                       />
                       <div class="absolute top-6 left-0 right-0 flex justify-between text-[10px] text-gray-500 px-1">
-                        <span>1</span><span>25</span><span>50</span><span>75</span><span>100</span>
+                        <span>1</span><span>250</span><span>500</span><span>750</span><span>1000</span>
                       </div>
                     </div>
 
@@ -196,43 +232,8 @@
                     </p>
                   </div>
                 </template>
-
-                <template #radius>
-                  <div class="space-y-2 mt-5">
-                    <div class="flex items-center justify-between">
-                      <label class="text-sm font-semibold flex items-center gap-2">
-                        <UIcon
-                          name="i-lucide-circle-dot"
-                          class="w-4 h-4 text-primary"
-                        />
-                        Radius Pencarian
-                      </label>
-                      <UBadge
-                        color="primary"
-                        variant="soft"
-                        size="sm"
-                      >
-                        {{ pendingRadius }} m
-                      </UBadge>
-                    </div>
-
-                    <div class="relative pb-6">
-                      <USlider
-                        v-model="pendingRadius"
-                        :min="1"
-                        :max="1000"
-                        :step="1"
-                      />
-                      <div class="absolute top-6 left-0 right-0 flex justify-between text-[10px] text-gray-500 px-1">
-                        <span>1m</span><span>250m</span><span>500m</span><span>750m</span><span>1km</span>
-                      </div>
-                    </div>
-                    <p class="text-[11px] text-gray-500">
-                      Jarak maksimal dari lokasi saya untuk mencari lokasi coverage
-                    </p>
-                  </div>
-                </template>
               </UTabs>
+
               <div class="border-t border-gray-200" />
 
               <UButton
@@ -295,7 +296,10 @@
           >
             {{ isRelocateMode ? 'Batal' : 'Ubah Lokasi' }}
           </UButton>
-          <UModal>
+          <USlideover
+            title="Daftar Lokasi Coverage"
+            :description="`Total ${filteredCoverageData.length} lokasi ditampilkan dari ${coverageData.length}`"
+          >
             <UButton
               color="primary"
               variant="subtle"
@@ -306,30 +310,29 @@
               Lihat Hasil
             </UButton>
 
-            <template #header>
-              <div class="flex items-center gap-3">
-                <div class="p-2 bg-primary/10 rounded-lg flex">
-                  <UIcon
-                    name="i-lucide-map-pin"
-                    class="w-7 h-7 text-primary"
-                  />
-                </div>
-                <div class="text-left">
-                  <h3 class="text-lg font-semibold">
-                    Daftar Lokasi Coverage
-                  </h3>
-                  <p class="text-sm text-gray-500">
-                    Total {{ coverageData.length }} lokasi ditemukan
+            <template #body>
+              <div class="h-full overflow-y-auto">
+                <div
+                  v-if="filteredCoverageData.length === 0 && coverageData.length > 0"
+                  class="flex flex-col items-center justify-center py-16 px-6 h-full"
+                >
+                  <div class="p-4 bg-gray-100 rounded-full mb-4">
+                    <UIcon
+                      name="i-lucide-filter-x"
+                      class="w-12 h-12 text-gray-400"
+                    />
+                  </div>
+                  <h4 class="text-lg font-semibold text-gray-700 mb-2">
+                    Semua Filter Dinonaktifkan
+                  </h4>
+                  <p class="text-sm text-gray-500 text-center max-w-sm">
+                    Aktifkan minimal satu filter di legenda untuk melihat data coverage
                   </p>
                 </div>
-              </div>
-            </template>
 
-            <template #body>
-              <div class="overflow-y-auto max-h-[calc(70vh-120px)]">
                 <div
-                  v-if="coverageData.length === 0"
-                  class="flex flex-col items-center justify-center py-16 px-6"
+                  v-else-if="coverageData.length === 0"
+                  class="flex flex-col items-center justify-center py-16 px-6 h-full"
                 >
                   <div class="p-4 bg-gray-100 rounded-full mb-4">
                     <UIcon
@@ -350,12 +353,16 @@
                   class="divide-y divide-gray-200"
                 >
                   <div
-                    v-for="(item, index) in coverageData"
-                    :key="index"
-                    class="px-2 py-2 hover:bg-gray-50 transition-colors cursor-pointer"
-                    @click="focusOnMarker(index)"
+                    v-for="(item) in filteredCoverageData"
+                    :key="item.id"
+                    class="px-4 py-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                    @click="focusOnMarkerByItem(item)"
                   >
                     <div class="flex items-start gap-4">
+                      <div
+                        class="w-3 h-3 rounded-full border-2 border-white shadow-sm mt-1 flex-shrink-0"
+                        :style="{ backgroundColor: getMarkerColor(item.type) }"
+                      />
                       <div class="flex-1 min-w-0">
                         <div class="flex items-start justify-between gap-4 mb-2">
                           <div>
@@ -407,15 +414,15 @@
                 </div>
               </div>
             </template>
-          </UModal>
+          </USlideover>
         </div>
       </div>
 
       <div
         v-if="showLegend"
-        class="absolute bottom-2 left-2 z-10"
+        class="absolute bottom-2 left-2 z-10 w-35"
       >
-        <div class="relative p-4 rounded-xl backdrop-blur-xl bg-white/95 shadow-xl">
+        <div class="relative p-3 rounded-xl backdrop-blur-xl bg-white/95 shadow-xl">
           <button
             class="absolute top-2 right-2 w-5 h-5 flex items-center justify-center text-gray-500 hover:text-gray-700"
             @click="showLegend = false"
@@ -425,6 +432,7 @@
               class="w-4 h-4"
             />
           </button>
+
           <div class="flex items-center gap-2 mb-2">
             <UIcon
               name="i-lucide-info"
@@ -432,33 +440,65 @@
             />
             <span class="text-xs font-semibold">Legenda</span>
           </div>
+
           <div class="space-y-1">
-            <div class="flex items-center gap-2">
-              <div class="w-2.5 h-2.5 rounded-full bg-blue-500" />
-              <span class="text-[11px]">Lokasi Saya</span>
+            <div class="flex items-center gap-2 mb-2.5">
+              <div class="w-3" />
+              <div class="w-2.5 h-2.5 rounded-full border-2 border-primary-500 bg-primary-500/20 shrink-0" />
+              <span class="text-[11px] leading-none">Radius</span>
             </div>
-            <div class="flex items-center gap-2">
-              <div class="w-2.5 h-2.5 rounded-full bg-primary-500" />
-              <span class="text-[11px]">Lokasi Coverage</span>
+
+            <div class="flex items-center gap-2 mb-1.5">
+              <div class="w-3" />
+              <div class="w-2.5 h-2.5 rounded-full bg-primary-500 shrink-0" />
+              <span class="text-[11px] leading-none">Lokasi Saya</span>
             </div>
+
             <div class="flex items-center gap-2">
-              <div class="w-2.5 h-2.5 rounded-full border-2 border-blue-500 bg-blue-500/20" />
-              <span class="text-[11px]">Radius</span>
+              <UCheckbox
+                v-model="visibleTypes.Fiberstar"
+                size="xs"
+                class="shrink-0"
+              />
+              <div class="w-2.5 h-2.5 rounded-full bg-[#f37336] shrink-0" />
+              <span class="text-[11px] leading-none">Fiberstar</span>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <UCheckbox
+                v-model="visibleTypes.CGS"
+                size="xs"
+                class="shrink-0"
+              />
+              <div class="w-2.5 h-2.5 rounded-full bg-[#742774] shrink-0" />
+              <span class="text-[11px] leading-none">CGS</span>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <UCheckbox
+                v-model="visibleTypes.SIP"
+                size="xs"
+                class="shrink-0"
+              />
+              <div class="w-2.5 h-2.5 rounded-full bg-[#cf2e2e] shrink-0" />
+              <span class="text-[11px] leading-none">SIP</span>
             </div>
           </div>
         </div>
       </div>
 
       <div
-        v-if="loading"
+        v-if="loading || filterLoading"
         class="absolute inset-0 bg-black/20 backdrop-blur-sm z-20 flex items-center justify-center"
       >
-        <div class="flex items-center gap-3 px-3 py-1">
+        <div class="flex items-center gap-3">
           <UIcon
             name="i-lucide-loader-2"
             class="w-5 h-5 animate-spin text-primary"
           />
-          <span class="text-sm font-medium text-gray-700">Memuat data coverage...</span>
+          <span class="text-sm font-medium text-gray-700">
+            Memuat Peta...
+          </span>
         </div>
       </div>
     </div>
@@ -466,10 +506,6 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
-import { getCoverage } from '~/services/coverageService'
-
-const config = useRuntimeConfig()
 const mapContainer = ref(null)
 const map = ref(null)
 const centerMarker = ref(null)
@@ -477,6 +513,7 @@ const markers = ref([])
 const activeInfoWindow = ref(null)
 const activeCircle = ref(null)
 const loading = ref(false)
+const filterLoading = ref(false)
 const isControlOpen = ref(true)
 const isRelocateMode = ref(false)
 const isMeasureMode = ref(false)
@@ -486,9 +523,11 @@ const measurePolyline = ref(null)
 const totalDistance = ref('0m')
 
 const tabs = [
-  { label: 'Maksimal Data', icon: 'i-lucide-layers', slot: 'data' },
-  { label: 'Radius Pencarian', icon: 'i-lucide-circle-dot', slot: 'radius' }
+  { label: 'Radius Pencarian', icon: 'i-lucide-circle-dot', value: 'radius', slot: 'radius' },
+  { label: 'Maksimal Data', icon: 'i-lucide-layers', value: 'limit', slot: 'limit' }
 ]
+
+const activeTab = ref('radius')
 
 const latitude = ref(3.576378)
 const longitude = ref(98.682272)
@@ -513,10 +552,122 @@ const mapLoaded = ref(false)
 const mapReloadKey = ref(0)
 const hasLocationBeenSet = ref(false)
 
+const legendItems = [
+  { type: 'Fiberstar', label: 'Fiberstar', color: '#f37336' },
+  { type: 'CGS', label: 'CGS', color: '#742774' },
+  { type: 'SIP', label: 'SIP', color: '#cf2e2e' }
+]
+
+const visibleTypes = ref({
+  Fiberstar: true,
+  CGS: true,
+  SIP: true
+})
+
+const filteredCoverageData = computed(() => {
+  return coverageData.value.filter(item => visibleTypes.value[item.type])
+})
+
 let searchTimeout = null
 let mapClickListener = null
 
-onMounted(() => hardResetMap(true))
+function getMarkerColor(type) {
+  const legend = legendItems.find(item => item.type === type)
+  return legend ? legend.color : '#9CA3AF'
+}
+
+function clearAllMarkers() {
+  if (markers.value && markers.value.length > 0) {
+    markers.value.forEach((marker) => {
+      if (marker) {
+        google.maps.event.clearInstanceListeners(marker)
+        marker.setVisible(false)
+        marker.setMap(null)
+      }
+    })
+  }
+
+  markers.value = []
+
+  if (activeInfoWindow.value) {
+    activeInfoWindow.value.close()
+    activeInfoWindow.value.setMap(null)
+    activeInfoWindow.value = null
+  }
+}
+
+watch(visibleTypes, async () => {
+  if (coverageData.value.length === 0 || !map.value) return
+  filterLoading.value = true
+  clearAllMarkers()
+  await new Promise(resolve => setTimeout(resolve, 300))
+  renderMarkers()
+  await new Promise(resolve => setTimeout(resolve, 200))
+
+  filterLoading.value = false
+}, { deep: true })
+
+function renderMarkers() {
+  if (!map.value) return
+  clearAllMarkers()
+  if (coverageData.value.length === 0) return
+  coverageData.value.forEach((item) => {
+    if (!visibleTypes.value[item.type]) {
+      return
+    }
+
+    const [lat, lng] = item.homepassedCoordinate.split(',').map(Number)
+    const markerColor = getMarkerColor(item.type)
+
+    const marker = new google.maps.Marker({
+      position: { lat, lng },
+      map: map.value,
+      title: item.residentName,
+      visible: true,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 12,
+        fillColor: markerColor,
+        fillOpacity: 1,
+        strokeColor: '#fff',
+        strokeWeight: 2
+      }
+    })
+
+    const info = new google.maps.InfoWindow({
+      content: `
+        <div style="padding:10px;font-family:system-ui">
+          <div style="font-size:15px;font-weight:600;margin-bottom:4px">${item.residentName}</div>
+          <div style="font-size:13px;color:#6B7280">${item.streetName} No. ${item.no}</div>
+          <div style="margin-top:6px;font-size:12px;color:#374151">
+            ID: <strong>${item.id}</strong> |
+            Type: <strong style="color:${markerColor}">${item.type}</strong> |
+            Jarak: <strong style="color:#00c951">${item.distance.toFixed(0)}m</strong>
+          </div>
+        </div>
+      `
+    })
+
+    marker.addListener('click', () => {
+      if (activeInfoWindow.value) activeInfoWindow.value.close()
+      info.open(map.value, marker)
+      activeInfoWindow.value = info
+    })
+
+    markers.value.push(marker)
+  })
+}
+
+watch(activeTab, (newTab, oldTab) => {
+  if (oldTab !== undefined && map.value && mapLoaded.value) {
+    hardResetMap(false)
+  }
+})
+
+onMounted(() => {
+  hardResetMap(true)
+})
+
 onBeforeUnmount(() => {
   if (mapClickListener) google.maps.event.removeListener(mapClickListener)
   if (searchTimeout) clearTimeout(searchTimeout)
@@ -672,9 +823,9 @@ function addMeasurePoint(latLng) {
     measurePolyline.value = new google.maps.Polyline({
       path: measurePoints.value,
       geodesic: true,
-      strokeColor: '#FF6B35',
+      strokeColor: '#99a1af',
       strokeOpacity: 1,
-      strokeWeight: 3,
+      strokeWeight: 1,
       map: map.value,
       icons: [{
         icon: {
@@ -816,74 +967,47 @@ function setCenterMarker() {
 async function fetchCoverage() {
   if (loading.value) return
   loading.value = true
+
   try {
-    if (activeCircle.value) activeCircle.value.setMap(null)
-    markers.value.forEach(m => m.setMap(null))
-    activeInfoWindow.value = null
-    activeCircle.value = null
-    markers.value = []
+    if (activeCircle.value) {
+      activeCircle.value.setMap(null)
+      activeCircle.value = null
+    }
+
+    clearAllMarkers()
+
     coverageData.value = []
 
-    const response = await getCoverage(config.public.apiUrl, {
-      longitude: longitude.value,
-      latitude: latitude.value,
-      radius: activeRadius.value,
-      limit: activeLimit.value
-    })
+    let url = `http://127.0.0.1:3333/coverage?longitude=${longitude.value}&latitude=${latitude.value}`
 
-    if (!response?.success || !response.data) {
-      return
+    if (activeTab.value === 'radius') {
+      url += `&radius=${activeRadius.value}`
+    } else if (activeTab.value === 'limit') {
+      url += `&limit=${activeLimit.value}`
     }
+
+    const res = await fetch(url)
+    const response = await res.json()
+    if (!response.success || !response.data) return
 
     coverageData.value = response.data
 
-    const center = { lat: latitude.value, lng: longitude.value }
-    activeCircle.value = new google.maps.Circle({
-      strokeColor: '#00c951',
-      strokeOpacity: 0.8,
-      strokeWeight: 2,
-      fillColor: '#75EDAE',
-      fillOpacity: 0.15,
-      map: map.value,
-      center,
-      radius: activeRadius.value,
-      clickable: false
-    })
-
-    response.data.forEach((item) => {
-      const [lat, lng] = item.homepassedCoordinate.split(',').map(Number)
-      const marker = new google.maps.Marker({
-        position: { lat, lng },
+    if (activeTab.value === 'radius') {
+      const center = { lat: latitude.value, lng: longitude.value }
+      activeCircle.value = new google.maps.Circle({
+        strokeColor: '#00c951',
+        strokeOpacity: 0.8,
+        strokeWeight: 2,
+        fillColor: '#75EDAE',
+        fillOpacity: 0.15,
         map: map.value,
-        title: item.residentName,
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 12,
-          fillColor: '#f37336',
-          fillOpacity: 1,
-          strokeColor: '#fff',
-          strokeWeight: 2
-        }
+        center,
+        radius: activeRadius.value,
+        clickable: false
       })
+    }
 
-      const info = new google.maps.InfoWindow({
-        content: `
-          <div style="padding:10px;font-family:system-ui">
-          <div style="font-size:15px;font-weight:600;margin-bottom:4px">${item.residentName}</div>
-          <div style="font-size:13px;color:#6B7280">${item.streetName} No. ${item.no}</div>
-          <div style="margin-top:6px;font-size:12px;color:#374151">
-          ID: <strong>${item.id}</strong> |
-          Jarak: <strong style="color:#00c951">${item.distance.toFixed(0)}m</strong>
-          </div>
-        `
-      })
-      marker.addListener('click', () => {
-        if (activeInfoWindow.value) activeInfoWindow.value.close()
-        info.open(map.value, marker)
-        activeInfoWindow.value = info
-      })
-      markers.value.push(marker)
-    })
+    renderMarkers()
   } catch {
     coverageData.value = []
   } finally {
@@ -897,6 +1021,20 @@ function focusOnMarker(index) {
     map.value.setCenter(marker.getPosition())
     map.value.setZoom(18)
     google.maps.event.trigger(marker, 'click')
+  }
+}
+
+function focusOnMarkerByItem(item) {
+  const index = coverageData.value.findIndex(data => data.id === item.id)
+  if (index !== -1) {
+    const matchingMarkerIndex = markers.value.findIndex((marker, idx) => {
+      const markerItem = coverageData.value.filter(d => visibleTypes.value[d.type])[idx]
+      return markerItem && markerItem.id === item.id
+    })
+
+    if (matchingMarkerIndex !== -1) {
+      focusOnMarker(matchingMarkerIndex)
+    }
   }
 }
 </script>
