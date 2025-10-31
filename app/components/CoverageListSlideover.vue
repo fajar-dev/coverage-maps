@@ -62,13 +62,9 @@
             @click="$emit('itemClick', item)"
           >
             <div class="flex items-start gap-4">
-              <div
-                class="w-3 h-3 rounded-full border-2 border-white shadow-sm mt-1 flex-shrink-0"
-                :style="{ backgroundColor: getMarkerColor(item.type) }"
-              />
               <div class="flex-1 min-w-0">
-                <div class="flex items-start justify-between gap-4 mb-2">
-                  <div>
+                <div class="flex items-start justify-between gap-2 mb-2">
+                  <div class="flex-1 min-w-0">
                     <h4 class="text-base font-semibold text-gray-900 mb-1">
                       {{ item.residentName }}
                     </h4>
@@ -80,16 +76,27 @@
                       <span>{{ item.streetName }} No. {{ item.no }}</span>
                     </div>
                   </div>
-                  <UBadge
-                    color="primary"
-                    variant="soft"
-                    size="sm"
-                  >
-                    {{ item.distance.toFixed(0) }}m
-                  </UBadge>
+                  <div class="flex flex-col gap-1 items-end flex-shrink-0">
+                    <UBadge
+                      size="sm"
+                      :style="{
+                        backgroundColor: getMarkerColor(item.type),
+                        color: '#ffffff'
+                      }"
+                    >
+                      {{ item.type }}
+                    </UBadge>
+                    <UBadge
+                      color="primary"
+                      variant="soft"
+                      size="sm"
+                    >
+                      {{ item.distance.toFixed(0) }}m
+                    </UBadge>
+                  </div>
                 </div>
 
-                <div class="grid grid-cols-2 mt-3">
+                <div class="grid grid-cols-2 gap-4 mt-3">
                   <div class="flex flex-col text-xs">
                     <div class="flex items-center gap-1 mb-1">
                       <UIcon
@@ -108,7 +115,7 @@
                       />
                       <span class="text-gray-600">Koordinat:</span>
                     </div>
-                    <span class="text-gray-700">{{ item.homepassedCoordinate }}</span>
+                    <span class="text-gray-700 truncate">{{ item.homepassedCoordinate }}</span>
                   </div>
                 </div>
               </div>
@@ -121,7 +128,7 @@
 </template>
 
 <script setup>
-defineProps({
+const props = defineProps({
   items: {
     type: Array,
     default: () => []
@@ -133,17 +140,36 @@ defineProps({
   totalCount: {
     type: Number,
     default: 0
+  },
+  legendItems: {
+    type: Array,
+    default: () => []
   }
 })
 
 defineEmits(['itemClick'])
 
-const getMarkerColor = (type) => {
-  const colorMap = {
-    Fiberstar: '#f37336',
-    CGS: '#742774',
-    SIP: '#cf2e2e'
+function generateColor(str) {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash)
   }
-  return colorMap[type] || '#3b82f6'
+
+  const hue = Math.abs(hash % 360)
+  const saturation = 60 + (Math.abs(hash) % 20)
+  const lightness = 40 + (Math.abs(hash >> 8) % 20)
+
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`
+}
+
+const getMarkerColor = (type) => {
+  if (props.legendItems && props.legendItems.length > 0) {
+    const legend = props.legendItems.find(item => item.type === type)
+    if (legend) {
+      return legend.color
+    }
+  }
+
+  return generateColor(type)
 }
 </script>

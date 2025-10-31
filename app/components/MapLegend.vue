@@ -23,49 +23,37 @@
       </div>
 
       <div class="space-y-1">
+        <!-- Radius Indicator -->
         <div class="flex items-center gap-2 mb-2.5">
           <div class="w-3" />
           <div class="w-2.5 h-2.5 rounded-full border-2 border-primary-500 bg-primary-500/20 shrink-0" />
           <span class="text-[11px] leading-none">Radius</span>
         </div>
 
+        <!-- My Location -->
         <div class="flex items-center gap-2 mb-1.5">
           <div class="w-3" />
           <div class="w-2.5 h-2.5 rounded-full bg-primary-500 shrink-0" />
           <span class="text-[11px] leading-none">Lokasi Saya</span>
         </div>
 
-        <div class="flex items-center gap-2">
+        <!-- Dynamic Legend Items -->
+        <div
+          v-for="item in legendItems"
+          :key="item.type"
+          class="flex items-center gap-2"
+        >
           <UCheckbox
-            :model-value="visibleTypes.Fiberstar"
+            :model-value="visibleTypes[item.type]"
             size="xs"
             class="shrink-0"
-            @update:model-value="$emit('update:visibleTypes', { ...visibleTypes, Fiberstar: $event })"
+            @update:model-value="toggleType(item.type, $event)"
           />
-          <div class="w-2.5 h-2.5 rounded-full bg-[#f37336] shrink-0" />
-          <span class="text-[11px] leading-none">Fiberstar</span>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <UCheckbox
-            :model-value="visibleTypes.CGS"
-            size="xs"
-            class="shrink-0"
-            @update:model-value="$emit('update:visibleTypes', { ...visibleTypes, CGS: $event })"
+          <div
+            class="w-2.5 h-2.5 rounded-full shrink-0"
+            :style="{ backgroundColor: item.color }"
           />
-          <div class="w-2.5 h-2.5 rounded-full bg-[#742774] shrink-0" />
-          <span class="text-[11px] leading-none">CGS</span>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <UCheckbox
-            :model-value="visibleTypes.SIP"
-            size="xs"
-            class="shrink-0"
-            @update:model-value="$emit('update:visibleTypes', { ...visibleTypes, SIP: $event })"
-          />
-          <div class="w-2.5 h-2.5 rounded-full bg-[#cf2e2e] shrink-0" />
-          <span class="text-[11px] leading-none">SIP</span>
+          <span class="text-[11px] leading-none">{{ item.label }}</span>
         </div>
       </div>
     </div>
@@ -73,20 +61,27 @@
 </template>
 
 <script setup>
-defineProps({
+const props = defineProps({
   isVisible: {
     type: Boolean,
     default: true
   },
+  legendItems: {
+    type: Array,
+    default: () => []
+  },
   visibleTypes: {
     type: Object,
-    default: () => ({
-      Fiberstar: true,
-      CGS: true,
-      SIP: true
-    })
+    default: () => ({})
   }
 })
 
-defineEmits(['close', 'update:visibleTypes'])
+const emit = defineEmits(['close', 'update:visibleTypes'])
+
+function toggleType(type, value) {
+  emit('update:visibleTypes', {
+    ...props.visibleTypes,
+    [type]: value
+  })
+}
 </script>

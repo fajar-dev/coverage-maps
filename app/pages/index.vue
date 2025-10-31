@@ -47,6 +47,7 @@
             :items="filteredCoverageData"
             :filtered-count="filteredCoverageData.length"
             :total-count="coverageData.length"
+            :legend-items="legendItems"
             @item-click="focusOnMarkerByItem"
           />
         </template>
@@ -54,6 +55,7 @@
 
       <MapLegend
         :is-visible="showLegend"
+        :legend-items="legendItems"
         :visible-types="visibleTypes"
         @close="showLegend = false"
         @update:visible-types="visibleTypes = $event"
@@ -109,17 +111,39 @@ const mapLoaded = ref(false)
 const mapReloadKey = ref(0)
 const hasLocationBeenSet = ref(false)
 
-const legendItems = [
-  { type: 'Fiberstar', label: 'Fiberstar', color: '#f37336' },
-  { type: 'CGS', label: 'CGS', color: '#742774' },
-  { type: 'SIP', label: 'SIP', color: '#cf2e2e' }
-]
+const visibleTypes = ref({})
+const legendItems = ref([])
 
-const visibleTypes = ref({
-  Fiberstar: true,
-  CGS: true,
-  SIP: true
-})
+function generateColor(str) {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash)
+  }
+
+  const hue = Math.abs(hash % 360)
+  const saturation = 60 + (Math.abs(hash) % 20)
+  const lightness = 40 + (Math.abs(hash >> 8) % 20)
+
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`
+}
+
+watch(coverageData, (newData) => {
+  if (newData.length > 0) {
+    const uniqueTypes = [...new Set(newData.map(item => item.type))]
+
+    legendItems.value = uniqueTypes.map(type => ({
+      type,
+      label: type,
+      color: generateColor(type)
+    }))
+
+    const newVisibleTypes = {}
+    uniqueTypes.forEach((type) => {
+      newVisibleTypes[type] = visibleTypes.value[type] !== undefined ? visibleTypes.value[type] : true
+    })
+    visibleTypes.value = newVisibleTypes
+  }
+}, { immediate: true, deep: true })
 
 const filteredCoverageData = computed(() => {
   return coverageData.value.filter(item => visibleTypes.value[item.type])
@@ -129,7 +153,7 @@ let searchTimeout = null
 let mapClickListener = null
 
 function getMarkerColor(type) {
-  const legend = legendItems.find(item => item.type === type)
+  const legend = legendItems.value.find(item => item.type === type)
   return legend ? legend.color : '#9CA3AF'
 }
 
@@ -198,9 +222,9 @@ function renderMarkers() {
           <div style="font-size:15px;font-weight:600;margin-bottom:4px">${item.residentName}</div>
           <div style="font-size:13px;color:#6B7280">${item.streetName} No. ${item.no}</div>
           <div style="margin-top:6px;font-size:12px;color:#374151">
-            ID: <strong>${item.id}</strong> |
-            Type: <strong style="color:${markerColor}">${item.type}</strong> |
-            Jarak: <strong style="color:#00c951">${item.distance.toFixed(0)}m</strong>
+            <strong>${item.id}</strong> |
+            <strong style="color:${markerColor}">${item.type}</strong> |
+            <strong style="color:#00c951">${item.distance.toFixed(0)}m</strong>
           </div>
         </div>
       `
