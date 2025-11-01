@@ -1,6 +1,6 @@
 <template>
   <div class="absolute top-2 left-2 z-10">
-    <UCard class="w-80 backdrop-blur-xl bg-white/95 shadow-xl">
+    <UCard class="w-80 backdrop-blur-xl bg-white/95 shadow-xl dark:bg-gray-900">
       <template #header>
         <button
           class="w-full flex items-center justify-between gap-2 hover:opacity-80 transition-opacity"
@@ -122,7 +122,7 @@
             </template>
           </UTabs>
 
-          <div class="border-t border-gray-200" />
+          <div class="border-t border-gray-200 dark:border-gray-700" />
 
           <UButton
             color="primary"

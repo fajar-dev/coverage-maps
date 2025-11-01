@@ -7,7 +7,7 @@
       color="primary"
       variant="subtle"
       size="md"
-      class="bg-white shadow"
+      class="bg-white shadow dark:bg-gray-800 dark:text-gray-100"
       icon="i-lucide-list"
     >
       Lihat Hasil
@@ -15,60 +15,63 @@
 
     <template #body>
       <div class="h-full overflow-y-auto">
+        <!-- FILTER DINONAKTIFKAN -->
         <div
           v-if="filteredCount === 0 && totalCount > 0"
           class="flex flex-col items-center justify-center py-16 px-6 h-full"
         >
-          <div class="p-4 bg-gray-100 rounded-full mb-4">
+          <div class="p-4 bg-gray-100 dark:bg-gray-700 rounded-full mb-4">
             <UIcon
               name="i-lucide-filter-x"
-              class="w-12 h-12 text-gray-400"
+              class="w-12 h-12 text-gray-400 dark:text-gray-300"
             />
           </div>
-          <h4 class="text-lg font-semibold text-gray-700 mb-2">
+          <h4 class="text-lg font-semibold text-gray-700 dark:text-gray-100 mb-2">
             Semua Filter Dinonaktifkan
           </h4>
-          <p class="text-sm text-gray-500 text-center max-w-sm">
+          <p class="text-sm text-gray-500 dark:text-gray-400 text-center max-w-sm">
             Aktifkan minimal satu filter di legenda untuk melihat data coverage
           </p>
         </div>
 
+        <!-- BELUM ADA DATA -->
         <div
           v-else-if="totalCount === 0"
           class="flex flex-col items-center justify-center py-16 px-6 h-full"
         >
-          <div class="p-4 bg-gray-100 rounded-full mb-4">
+          <div class="p-4 bg-gray-100 dark:bg-gray-700 rounded-full mb-4">
             <UIcon
               name="i-lucide-map-pin-off"
-              class="w-12 h-12 text-gray-400"
+              class="w-12 h-12 text-gray-400 dark:text-gray-300"
             />
           </div>
-          <h4 class="text-lg font-semibold text-gray-700 mb-2">
+          <h4 class="text-lg font-semibold text-gray-700 dark:text-gray-100 mb-2">
             Belum Ada Data
           </h4>
-          <p class="text-sm text-gray-500 text-center max-w-sm">
+          <p class="text-sm text-gray-500 dark:text-gray-400 text-center max-w-sm">
             Silakan muat data coverage terlebih dahulu dengan mengklik tombol "Muat Ulang"
           </p>
         </div>
 
+        <!-- DAFTAR ITEM -->
         <div
           v-else
-          class="divide-y divide-gray-200"
+          class="divide-y divide-gray-200 dark:divide-gray-700"
         >
           <div
             v-for="(item) in items"
             :key="item.id"
-            class="px-4 py-4 hover:bg-gray-50 transition-colors cursor-pointer"
+            class="px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
             @click="$emit('itemClick', item)"
           >
             <div class="flex items-start gap-4">
               <div class="flex-1 min-w-0">
                 <div class="flex items-start justify-between gap-2 mb-2">
                   <div class="flex-1 min-w-0">
-                    <h4 class="text-base font-semibold text-gray-900 mb-1">
+                    <h4 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">
                       {{ item.residentName }}
                     </h4>
-                    <div class="flex items-center gap-2 text-sm text-gray-600">
+                    <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                       <UIcon
                         name="i-lucide-map-pin"
                         class="w-4 h-4"
@@ -101,21 +104,21 @@
                     <div class="flex items-center gap-1 mb-1">
                       <UIcon
                         name="i-lucide-home"
-                        class="w-3 h-3 text-gray-400"
+                        class="w-3 h-3 text-gray-400 dark:text-gray-500"
                       />
-                      <span class="text-gray-600">Home Pass ID:</span>
+                      <span class="text-gray-600 dark:text-gray-400">Home Pass ID:</span>
                     </div>
-                    <span class="font-semibold text-gray-900">{{ item.id }}</span>
+                    <span class="font-semibold text-gray-900 dark:text-gray-100">{{ item.id }}</span>
                   </div>
                   <div class="flex flex-col text-xs">
                     <div class="flex items-center gap-1 mb-1">
                       <UIcon
                         name="i-lucide-navigation"
-                        class="w-3 h-3 text-gray-400"
+                        class="w-3 h-3 text-gray-400 dark:text-gray-500"
                       />
-                      <span class="text-gray-600">Koordinat:</span>
+                      <span class="text-gray-600 dark:text-gray-400">Koordinat:</span>
                     </div>
-                    <span class="text-gray-700 truncate">{{ item.homepassedCoordinate }}</span>
+                    <span class="text-gray-700 dark:text-gray-300 truncate">{{ item.homepassedCoordinate }}</span>
                   </div>
                 </div>
               </div>

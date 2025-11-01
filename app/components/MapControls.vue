@@ -1,10 +1,13 @@
 <template>
   <div>
-    <!-- Return to Original Location & Measure Mode Buttons -->
+    <div class="absolute top-15 right-2.5 z-10">
+      <UColorModeButton class="w-10 h-10 flex items-center justify-center bg-white text-gray-600 shadow-md rounded-none hover:bg-gray-100 hover:text-gray-800 transition" />
+    </div>
+
     <div class="absolute bottom-50 right-3 z-10 flex flex-col gap-3 items-end">
       <UButton
         icon="i-lucide-map-pinned"
-        size="xl"
+        size="lg"
         class="w-12 h-12 flex items-center justify-center bg-white text-gray-600 shadow-md rounded-full hover:bg-gray-100 hover:text-gray-800 transition"
         variant="solid"
         @click="$emit('returnToLocation')"

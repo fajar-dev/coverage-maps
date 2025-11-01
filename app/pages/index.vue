@@ -70,6 +70,7 @@
 import { getCoverage } from '~/services/coverageService'
 
 const config = useRuntimeConfig()
+const colorMode = useColorMode()
 const mapContainer = ref(null)
 const map = ref(null)
 const centerMarker = ref(null)
@@ -113,6 +114,112 @@ const hasLocationBeenSet = ref(false)
 
 const visibleTypes = ref({})
 const legendItems = ref([])
+
+const lightMapStyles = [
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  { featureType: 'transit', stylers: [{ visibility: 'off' }] }
+]
+
+const darkMapStyles = [
+  { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
+  {
+    featureType: 'administrative.locality',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#d59563' }]
+  },
+  {
+    featureType: 'poi',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#d59563' }]
+  },
+  {
+    featureType: 'poi',
+    stylers: [{ visibility: 'off' }]
+  },
+  {
+    featureType: 'poi.park',
+    elementType: 'geometry',
+    stylers: [{ color: '#263c3f' }]
+  },
+  {
+    featureType: 'poi.park',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#6b9a76' }]
+  },
+  {
+    featureType: 'road',
+    elementType: 'geometry',
+    stylers: [{ color: '#38414e' }]
+  },
+  {
+    featureType: 'road',
+    elementType: 'geometry.stroke',
+    stylers: [{ color: '#212a37' }]
+  },
+  {
+    featureType: 'road',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#9ca5b3' }]
+  },
+  {
+    featureType: 'road.highway',
+    elementType: 'geometry',
+    stylers: [{ color: '#746855' }]
+  },
+  {
+    featureType: 'road.highway',
+    elementType: 'geometry.stroke',
+    stylers: [{ color: '#1f2835' }]
+  },
+  {
+    featureType: 'road.highway',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#f3d19c' }]
+  },
+  {
+    featureType: 'transit',
+    elementType: 'geometry',
+    stylers: [{ color: '#2f3948' }]
+  },
+  {
+    featureType: 'transit',
+    stylers: [{ visibility: 'off' }]
+  },
+  {
+    featureType: 'transit.station',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#d59563' }]
+  },
+  {
+    featureType: 'water',
+    elementType: 'geometry',
+    stylers: [{ color: '#17263c' }]
+  },
+  {
+    featureType: 'water',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#515c6d' }]
+  },
+  {
+    featureType: 'water',
+    elementType: 'labels.text.stroke',
+    stylers: [{ color: '#17263c' }]
+  }
+]
+
+const currentMapStyles = computed(() => {
+  return colorMode.value === 'dark' ? darkMapStyles : lightMapStyles
+})
+
+watch(() => colorMode.value, (newMode) => {
+  if (map.value) {
+    map.value.setOptions({
+      styles: newMode === 'dark' ? darkMapStyles : lightMapStyles
+    })
+  }
+})
 
 function generateColor(str) {
   let hash = 0
@@ -218,7 +325,7 @@ function renderMarkers() {
 
     const info = new google.maps.InfoWindow({
       content: `
-        <div style="padding:10px;font-family:system-ui">
+        <div style="padding:10px;font-family:system-ui"; background-color:black>
           <div style="font-size:15px;font-weight:600;margin-bottom:4px">${item.residentName}</div>
           <div style="font-size:13px;color:#6B7280">${item.streetName} No. ${item.no}</div>
           <div style="margin-top:6px;font-size:12px;color:#374151">
@@ -321,10 +428,7 @@ function initMap() {
     fullscreenControl: true,
     mapTypeControl: false,
     streetViewControl: false,
-    styles: [
-      { featureType: 'poi', stylers: [{ visibility: 'off' }] },
-      { featureType: 'transit', stylers: [{ visibility: 'off' }] }
-    ]
+    styles: currentMapStyles.value
   })
 
   if (window.google?.maps?.places) {
