@@ -53,7 +53,10 @@
             class="w-2.5 h-2.5 rounded-full shrink-0"
             :style="{ backgroundColor: item.color }"
           />
-          <span class="text-[11px] leading-none">{{ item.label }}</span>
+          <span class="text-[11px] leading-none">
+            {{ item.label }}
+            <strong v-if="item.count !== undefined">({{ item.count }})</strong>
+          </span>
         </div>
       </div>
     </div>

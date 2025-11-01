@@ -241,7 +241,8 @@ watch(coverageData, (newData) => {
     legendItems.value = uniqueTypes.map(type => ({
       type,
       label: type,
-      color: generateColor(type)
+      color: generateColor(type),
+      count: newData.filter(item => item.type === type).length
     }))
 
     const newVisibleTypes = {}
