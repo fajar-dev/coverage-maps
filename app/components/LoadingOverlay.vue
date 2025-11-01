@@ -8,7 +8,7 @@
         name="i-lucide-loader-2"
         class="w-5 h-5 animate-spin text-primary"
       />
-      <span class="text-sm font-medium text-gray-700">
+      <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
         Memuat Peta...
       </span>
     </div>
