@@ -325,8 +325,8 @@ function renderMarkers() {
 
     const info = new google.maps.InfoWindow({
       content: `
-        <div style="padding:10px;font-family:system-ui"; background-color:black>
-          <div style="font-size:15px;font-weight:600;margin-bottom:4px">${item.residentName}</div>
+        <div style="padding:10px;font-family:system-ui">
+          <div style="font-size:15px;font-weight:600;margin-bottom:4px; color:black !important">${item.residentName}</div>
           <div style="font-size:13px;color:#6B7280">${item.streetName} No. ${item.no}</div>
           <div style="margin-top:6px;font-size:12px;color:#374151">
             <strong>${item.id}</strong> |
