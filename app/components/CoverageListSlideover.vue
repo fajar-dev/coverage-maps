@@ -2,6 +2,7 @@
   <USlideover
     title="Daftar Lokasi Coverage"
     :description="`Total ${filteredCount} lokasi ditampilkan dari ${totalCount}`"
+    :overlay="false"
   >
     <UButton
       color="primary"
@@ -79,7 +80,7 @@
                       <span>{{ item.streetName }} No. {{ item.no }}</span>
                     </div>
                   </div>
-                  <div class="flex flex-col gap-1 items-end flex-shrink-0">
+                  <div class="flex flex-col gap-1 items-end shrink-0">
                     <UBadge
                       size="sm"
                       :style="{
