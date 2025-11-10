@@ -1,12 +1,4 @@
-import type { CoverageItem, CoverageResponse } from '~/types/coverage'
-
-interface GetCoverageParams {
-  apiUrl: string
-  longitude: number
-  latitude: number
-  mode: 'radius' | 'limit'
-  value: number
-}
+import type { CoverageItem, CoverageResponse, GetCoverageParams } from '~/types/coverage'
 
 export async function getCoverage({
   apiUrl,

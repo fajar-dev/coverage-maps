@@ -70,14 +70,14 @@
                 <div class="flex items-start justify-between gap-2 mb-2">
                   <div class="flex-1 min-w-0">
                     <h4 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">
-                      {{ item.residentName }}
+                      {{ item.name }}
                     </h4>
-                    <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                    <div class="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
                       <UIcon
                         name="i-lucide-map-pin"
-                        class="w-4 h-4"
+                        class="w-10 h-10"
                       />
-                      <span>{{ item.streetName }} No. {{ item.no }}</span>
+                      <span class="text-sm">{{ item.address}}</span>
                     </div>
                   </div>
                   <div class="flex flex-col gap-1 items-end shrink-0">
@@ -119,7 +119,7 @@
                       />
                       <span class="text-gray-600 dark:text-gray-400">Koordinat:</span>
                     </div>
-                    <span class="text-gray-700 dark:text-gray-300 truncate">{{ item.homepassedCoordinate }}</span>
+                    <span class="text-gray-700 dark:text-gray-300 truncate">{{ item.coordinate }}</span>
                   </div>
                 </div>
               </div>

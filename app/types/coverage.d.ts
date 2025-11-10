@@ -1,11 +1,17 @@
 export interface CoverageItem {
   id: number
-  residentName: string
-  streetName: string
-  no: string
-  type: 'Fiberstar' | 'CGS' | 'SIP'
-  homepassedCoordinate: string
-  distance: number
+  name: string
+  address: string
+  coordinate: string
+  type: string
+}
+
+interface GetCoverageParams {
+  apiUrl: string
+  longitude: number
+  latitude: number
+  mode: 'radius' | 'limit'
+  value: number
 }
 
 export interface CoverageResponse {
