@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="isVisible"
-    class="absolute bottom-2 left-2 z-10 w-35"
+    class="absolute bottom-2 left-2 z-10 w-48"
   >
     <div class="relative p-3 rounded-xl backdrop-blur-xl bg-white/95 dark:bg-gray-900 shadow-xl">
       <button

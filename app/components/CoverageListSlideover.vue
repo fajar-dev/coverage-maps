@@ -72,12 +72,20 @@
                     <h4 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">
                       {{ item.name }}
                     </h4>
-                    <div class="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
-                      <UIcon
-                        name="i-lucide-map-pin"
-                        class="w-10 h-10"
-                      />
-                      <span class="text-sm">{{ item.address}}</span>
+                    <div
+                      v-if="item.address"
+                      class="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400"
+                    >
+                      <div class="shrink-0 h-4 flex items-start pt-0.5">
+                        <UIcon
+                          name="i-lucide-map-pin"
+                          class="size-4 text-gray-500 dark:text-gray-400"
+                        />
+                      </div>
+
+                      <span class="leading-5">
+                        {{ item.address }}
+                      </span>
                     </div>
                   </div>
                   <div class="flex flex-col gap-1 items-end shrink-0">
@@ -104,10 +112,10 @@
                   <div class="flex flex-col text-xs">
                     <div class="flex items-center gap-1 mb-1">
                       <UIcon
-                        name="i-lucide-home"
+                        name="i-lucide-hash"
                         class="w-3 h-3 text-gray-400 dark:text-gray-500"
                       />
-                      <span class="text-gray-600 dark:text-gray-400">Home Pass ID:</span>
+                      <span class="text-gray-600 dark:text-gray-400">ID:</span>
                     </div>
                     <span class="font-semibold text-gray-900 dark:text-gray-100">{{ item.id }}</span>
                   </div>
