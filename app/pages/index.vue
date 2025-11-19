@@ -356,7 +356,7 @@ function renderMarkers() {
       visible: true,
       icon: {
         path: google.maps.SymbolPath.CIRCLE,
-        scale: 8,
+        scale: 7,
         fillColor: markerColor,
         fillOpacity: 1,
         strokeColor: '#fff',
@@ -540,7 +540,7 @@ function addMeasurePoint(latLng) {
     map: map.value,
     icon: {
       path: google.maps.SymbolPath.CIRCLE,
-      scale: 8,
+      scale: 7,
       fillColor: '#000000',
       fillOpacity: 1,
       strokeColor: '#ffffff',
@@ -688,7 +688,7 @@ function setCenterMarker() {
     title: 'Lokasi Saya',
     icon: {
       path: google.maps.SymbolPath.CIRCLE,
-      scale: 8,
+      scale: 7,
       fillColor: '#00c951',
       fillOpacity: 1,
       strokeColor: '#ffffff',
