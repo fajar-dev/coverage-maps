@@ -94,10 +94,10 @@ const longitude = ref(98.682272)
 const originalLatitude = ref(3.576378)
 const originalLongitude = ref(98.682272)
 
-const activeRadius = ref(500)
+const activeRadius = ref(200)
 const activeLimit = ref(10)
 
-const pendingRadius = ref(500)
+const pendingRadius = ref(200)
 const pendingLimit = ref(10)
 
 const coverageData = ref([])
@@ -221,6 +221,46 @@ watch(() => colorMode.value, (newMode) => {
   }
 })
 
+function calculateZoomLevel() {
+  if (activeTab.value === 'radius') {
+    const radius = activeRadius.value
+    if (radius <= 400) return 18
+    if (radius <= 800) return 17
+    if (radius <= 1500) return 16
+    if (radius <= 2000) return 15
+    return 10
+  } else {
+    if (markers.value.length === 0) return 17
+
+    const center = { lat: latitude.value, lng: longitude.value }
+    let maxDistance = 0
+
+    markers.value.forEach((marker) => {
+      const distance = google.maps.geometry.spherical.computeDistanceBetween(
+        new google.maps.LatLng(center.lat, center.lng),
+        marker.getPosition()
+      )
+      maxDistance = Math.max(maxDistance, distance)
+    })
+
+    if (maxDistance <= 200) return 19
+    if (maxDistance <= 400) return 18
+    if (maxDistance <= 800) return 17
+    if (maxDistance <= 1000) return 16
+    return 12
+  }
+}
+
+function adjustZoomToContent() {
+  if (!map.value) return
+
+  const center = { lat: latitude.value, lng: longitude.value }
+  const zoomLevel = calculateZoomLevel()
+
+  map.value.setCenter(center)
+  map.value.setZoom(zoomLevel)
+}
+
 function generateColor(str) {
   let hash = 0
   for (let i = 0; i < str.length; i++) {
@@ -316,11 +356,11 @@ function renderMarkers() {
       visible: true,
       icon: {
         path: google.maps.SymbolPath.CIRCLE,
-        scale: 12,
+        scale: 8,
         fillColor: markerColor,
         fillOpacity: 1,
         strokeColor: '#fff',
-        strokeWeight: 2
+        strokeWeight: 1
       }
     })
 
@@ -346,6 +386,10 @@ function renderMarkers() {
 
     markers.value.push(marker)
   })
+
+  setTimeout(() => {
+    adjustZoomToContent()
+  }, 100)
 }
 
 watch(activeTab, (newTab, oldTab) => {
@@ -421,9 +465,11 @@ function initMap() {
 
   if (!mapContainer.value) return
 
+  const dynamicZoom = calculateZoomLevel()
+
   map.value = new google.maps.Map(mapContainer.value, {
     center,
-    zoom: 16,
+    zoom: dynamicZoom,
     mapTypeId: 'roadmap',
     zoomControl: true,
     fullscreenControl: true,
@@ -498,7 +544,7 @@ function addMeasurePoint(latLng) {
       fillColor: '#000000',
       fillOpacity: 1,
       strokeColor: '#ffffff',
-      strokeWeight: 2
+      strokeWeight: 1
     },
     zIndex: 1000
   })
@@ -642,11 +688,11 @@ function setCenterMarker() {
     title: 'Lokasi Saya',
     icon: {
       path: google.maps.SymbolPath.CIRCLE,
-      scale: 12,
+      scale: 8,
       fillColor: '#00c951',
       fillOpacity: 1,
       strokeColor: '#ffffff',
-      strokeWeight: 3
+      strokeWeight: 1
     }
   })
 }

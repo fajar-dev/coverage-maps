@@ -70,12 +70,16 @@
                   <USlider
                     :model-value="radius"
                     :min="1"
-                    :max="10000"
+                    :max="2000"
                     :step="10"
                     @update:model-value="$emit('update:radius', $event)"
                   />
                   <div class="absolute top-6 left-0 right-0 flex justify-between text-[10px] text-gray-500 px-1">
-                    <span>1m</span><span>2.5km</span><span>5km</span><span>7.5km</span><span>10km</span>
+                    <span>1m</span>
+                    <span>500m</span>
+                    <span>1km</span>
+                    <span>1.5km</span>
+                    <span>2km</span>
                   </div>
                 </div>
                 <p class="text-[11px] text-gray-500">
