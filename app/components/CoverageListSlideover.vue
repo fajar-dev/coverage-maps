@@ -109,16 +109,27 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 mt-3">
-                  <div class="flex flex-col text-xs">
+                  <!-- BAGIAN SERVICE / HOMEPASS (Conditional) -->
+                  <div
+                    v-if="item.serviceId || item.homepassId"
+                    class="flex flex-col text-xs"
+                  >
                     <div class="flex items-center gap-1 mb-1">
                       <UIcon
                         name="i-lucide-hash"
                         class="w-3 h-3 text-gray-400 dark:text-gray-500"
                       />
-                      <span class="text-gray-600 dark:text-gray-400">ID:</span>
+                      <span class="text-gray-600 dark:text-gray-400">
+                        {{ item.serviceId ? 'Service ID:' : 'HomePass ID:' }}
+                      </span>
                     </div>
-                    <span class="font-semibold text-gray-900 dark:text-gray-100">{{ item.id }}</span>
+
+                    <span class="font-semibold text-gray-900 dark:text-gray-100">
+                      {{ item.serviceId || item.homepassId }}
+                    </span>
                   </div>
+
+                  <!-- BAGIAN KOORDINAT (Selalu tampil) -->
                   <div class="flex flex-col text-xs">
                     <div class="flex items-center gap-1 mb-1">
                       <UIcon
@@ -127,7 +138,10 @@
                       />
                       <span class="text-gray-600 dark:text-gray-400">Koordinat:</span>
                     </div>
-                    <span class="text-gray-700 dark:text-gray-300 truncate">{{ item.coordinate }}</span>
+
+                    <span class="text-gray-700 dark:text-gray-300 truncate">
+                      {{ item.coordinate }}
+                    </span>
                   </div>
                 </div>
               </div>

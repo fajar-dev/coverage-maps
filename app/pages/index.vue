@@ -370,7 +370,7 @@ function renderMarkers() {
           <div style="font-size:15px;font-weight:600;margin-bottom:4px; color:black !important">${item.name}</div>
           <div style="font-size:13px;color:#6B7280">${item.address}</div>
           <div style="margin-top:6px;font-size:12px;color:#374151">
-            <strong>${item.id}</strong> |
+            <strong>${item.serviceId || item.homepassId}</strong> |
             <strong style="color:${markerColor}">${item.type}</strong> |
             <strong style="color:#00c951">${item.distance.toFixed(0)}m</strong>
           </div>
