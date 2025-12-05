@@ -366,16 +366,56 @@ function renderMarkers() {
 
     const info = new google.maps.InfoWindow({
       content: `
-        <div style="padding:10px;font-family:system-ui; max-width: 240px;">
-          <div style="font-size:15px;font-weight:600;margin-bottom:4px; color:black !important">${item.name ?? ''}</div>
-          <div style="font-size:13px;color:#6B7280">${item.address}</div>
-          <div style="margin-top:6px;font-size:12px;color:#374151">
-            <strong>${item.serviceId || item.homepassId || ''}</strong> |
-            <strong style="color:${markerColor}">${item.type}</strong> |
-            <strong style="color:#00c951">${item.distance.toFixed(0)}m</strong>
-          </div>
+    <div style="padding:10px;font-family:system-ui; max-width:240px;">
+      
+      <div style="font-size:15px;font-weight:600;margin-bottom:4px;color:black !important;">
+        ${item.name ?? ''}
+      </div>
+
+      <div style="font-size:13px;color:#6B7280;">
+        ${item.address}
+      </div>
+
+      ${
+        item.serviceId
+          ? `
+        <div style="margin-top:6px;font-size:12px;font-weight:600;color:black !important;">
+          <strong>${item.serviceId}</strong>
         </div>
-      `
+        `
+          : ''
+      }
+
+      ${
+        item.homepassId
+          ? `
+        <div style="margin-top:6px;font-size:12px;font-weight:600;color:black !important;">
+          <strong>${item.homepassId}</strong>
+        </div>
+        `
+          : ''
+      }
+
+      ${
+        item.splitterId
+          ? `
+        <div style="margin-top:6px;font-size:12px;font-weight:600;color:black !important;">
+          <strong>${item.splitterId}</strong>
+        </div>
+        `
+          : ''
+      }
+
+      <div style="margin-top:6px;font-size:12px;color:${markerColor};">
+        <strong>${item.type}</strong>
+      </div>
+
+      <div style="font-size:12px;color:#00c951;">
+        <strong>${item.distance.toFixed(0)}m</strong>
+      </div>
+
+    </div>
+  `
     })
 
     marker.addListener('click', () => {

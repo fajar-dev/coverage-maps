@@ -108,10 +108,10 @@
                   </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 mt-3">
-                  <!-- BAGIAN SERVICE / HOMEPASS (Conditional) -->
+                <div class="grid grid-cols-3 gap-4 mt-3">
+                  <!-- SERVICE ID -->
                   <div
-                    v-if="item.serviceId || item.homepassId"
+                    v-if="item.serviceId"
                     class="flex flex-col text-xs"
                   >
                     <div class="flex items-center gap-1 mb-1">
@@ -119,13 +119,47 @@
                         name="i-lucide-hash"
                         class="w-3 h-3 text-gray-400 dark:text-gray-500"
                       />
-                      <span class="text-gray-600 dark:text-gray-400">
-                        {{ item.serviceId ? 'Service ID:' : 'HomePass ID:' }}
-                      </span>
+                      <span class="text-gray-600 dark:text-gray-400">Service ID:</span>
                     </div>
 
                     <span class="font-semibold text-gray-900 dark:text-gray-100">
-                      {{ item.serviceId || item.homepassId }}
+                      {{ item.serviceId }}
+                    </span>
+                  </div>
+
+                  <!-- HOMEPASS ID -->
+                  <div
+                    v-if="item.homepassId"
+                    class="flex flex-col text-xs"
+                  >
+                    <div class="flex items-center gap-1 mb-1">
+                      <UIcon
+                        name="i-lucide-hash"
+                        class="w-3 h-3 text-gray-400 dark:text-gray-500"
+                      />
+                      <span class="text-gray-600 dark:text-gray-400">HomePass ID:</span>
+                    </div>
+
+                    <span class="font-semibold text-gray-900 dark:text-gray-100">
+                      {{ item.homepassId }}
+                    </span>
+                  </div>
+
+                  <!-- SPLITTER ID -->
+                  <div
+                    v-if="item.splitterId"
+                    class="flex flex-col text-xs"
+                  >
+                    <div class="flex items-center gap-1 mb-1">
+                      <UIcon
+                        name="i-lucide-hash"
+                        class="w-3 h-3 text-gray-400 dark:text-gray-500"
+                      />
+                      <span class="text-gray-600 dark:text-gray-400">Splitter ID:</span>
+                    </div>
+
+                    <span class="font-semibold text-gray-900 dark:text-gray-100">
+                      {{ item.splitterId }}
                     </span>
                   </div>
 
