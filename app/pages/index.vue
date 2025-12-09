@@ -41,6 +41,7 @@
         @return-to-location="returnToOriginalLocation"
         @toggle-measure="toggleMeasureMode"
         @toggle-relocate="toggleRelocateMode"
+        @export="handleExportCoverage"
       >
         <template #slideover>
           <CoverageListSlideover
@@ -340,7 +341,13 @@ function renderMarkers() {
   if (!map.value) return
   clearAllMarkers()
   clearMeasurement()
-  if (coverageData.value.length === 0) return
+
+  // Safety check: pastikan coverageData adalah array
+  if (!Array.isArray(coverageData.value) || coverageData.value.length === 0) {
+    console.log('No coverage data to render')
+    return
+  }
+
   coverageData.value.forEach((item) => {
     if (!visibleTypes.value[item.type]) {
       return
@@ -758,7 +765,26 @@ async function fetchCoverage() {
       value: activeTab.value === 'radius' ? activeRadius.value : activeLimit.value
     })
 
-    coverageData.value = data
+    // Debug: log format data dari backend
+    console.log('Data received from backend:', data)
+    console.log('Data type:', typeof data)
+    console.log('Is array?', Array.isArray(data))
+
+    // Handle berbagai format response
+    if (Array.isArray(data)) {
+      // Jika response langsung array
+      coverageData.value = data
+    } else if (data && Array.isArray(data.data)) {
+      // Jika response berupa { data: [...] }
+      coverageData.value = data.data
+    } else if (data && Array.isArray(data.results)) {
+      // Jika response berupa { results: [...] }
+      coverageData.value = data.results
+    } else {
+      // Format tidak dikenali
+      console.error('Unexpected data format:', data)
+      coverageData.value = []
+    }
 
     if (activeTab.value === 'radius') {
       const center = { lat: latitude.value, lng: longitude.value }
@@ -783,6 +809,66 @@ async function fetchCoverage() {
     loading.value = false
   }
 }
+
+// ============== EXPORT FUNCTION (TAMBAHAN BARU) ==============
+async function handleExportCoverage() {
+  try {
+    // Filter hanya types yang visible (checked)
+    const visibleTypesArray = legendItems.value
+      .filter(item => visibleTypes.value[item.type])
+      .map(item => item.type)
+
+    // Build URL
+    let url = `${config.public.apiUrl}/export?longitude=${longitude.value}&latitude=${latitude.value}`
+
+    if (activeTab.value === 'radius') {
+      url += `&radius=${activeRadius.value}`
+    } else if (activeTab.value === 'limit') {
+      url += `&limit=${activeLimit.value}`
+    }
+
+    if (visibleTypesArray.length > 0) {
+      const typeParam = encodeURIComponent(visibleTypesArray.join(','))
+      url += `&type=${typeParam}`
+    }
+
+    // Fetch CSV
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Accept: 'text/csv'
+      }
+    })
+
+    if (!response.ok) {
+      console.error('Failed to export coverage', response.status, response.statusText)
+      throw new Error(`Export failed: ${response.status} ${response.statusText}`)
+    }
+
+    // Download file
+    const blob = await response.blob()
+    const blobUrl = window.URL.createObjectURL(blob)
+
+    const a = document.createElement('a')
+    a.href = blobUrl
+
+    // Generate filename dengan timestamp
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5)
+    a.download = `coverage-${timestamp}.csv`
+
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+
+    window.URL.revokeObjectURL(blobUrl)
+
+    console.log('Export berhasil!')
+  } catch (error) {
+    console.error('Export gagal:', error)
+    alert('Export gagal! Silakan coba lagi.')
+  }
+}
+// ============== END EXPORT FUNCTION ==============
 
 function focusOnMarker(index) {
   const marker = markers.value[index]

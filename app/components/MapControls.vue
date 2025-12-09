@@ -3,8 +3,16 @@
     <div class="absolute top-15 right-2.5 z-10">
       <UColorModeButton class="w-10 h-10 flex items-center justify-center bg-white text-gray-600 shadow-md rounded-none hover:bg-gray-100 hover:text-gray-800 transition" />
     </div>
-
     <div class="absolute bottom-50 right-3 z-10 flex flex-col gap-3 items-end">
+      <!-- Export Button - Fixed -->
+      <UButton
+        icon="i-lucide-download"
+        size="lg"
+        class="w-12 h-12 flex items-center justify-center bg-white text-gray-600 shadow-md rounded-full hover:bg-gray-100 hover:text-gray-800 transition"
+        variant="solid"
+        @click="$emit('export')"
+      />
+      <!-- Return to Location Button -->
       <UButton
         icon="i-lucide-map-pinned"
         size="lg"
@@ -13,6 +21,7 @@
         @click="$emit('returnToLocation')"
       />
 
+      <!-- Measure Tool Button -->
       <div class="flex items-center gap-2">
         <Transition name="fade">
           <div
@@ -71,5 +80,5 @@ defineProps({
   }
 })
 
-defineEmits(['returnToLocation', 'toggleMeasure', 'toggleRelocate'])
+defineEmits(['returnToLocation', 'toggleMeasure', 'toggleRelocate', 'export'])
 </script>
