@@ -29,7 +29,7 @@
               icon="i-lucide-search"
               size="md"
               variant="outline"
-              placeholder="Nama tempat atau koordinat (lat, lng)..."
+              placeholder="Nama tempat, koordinat desimal (lat, lng) atau DMS (3°42'45.2&quot;N 98°39'13.9&quot;E)..."
               class="w-full dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 dark:border-gray-700"
               @update:model-value="handleInput"
               @keydown.enter="handleEnter"
@@ -47,7 +47,7 @@
             class="flex items-center gap-2 text-xs text-green-600 dark:text-green-400"
           >
             <UIcon name="i-lucide-info" class="w-3 h-3" />
-            <span>Koordinat terdeteksi, tekan enter untuk menerapkan.</span>
+            <span>{{ coordinateFormatMessage }}</span>
           </div>
         </div>
       </UCard>
@@ -100,22 +100,10 @@
 
 <script setup>
 const props = defineProps({
-  isVisible: {
-    type: Boolean,
-    default: false,
-  },
-  searchQuery: {
-    type: String,
-    default: "",
-  },
-  suggestions: {
-    type: Array,
-    default: () => [],
-  },
-  showSuggestions: {
-    type: Boolean,
-    default: false,
-  },
+  isVisible: { type: Boolean, default: false },
+  searchQuery: { type: String, default: "" },
+  suggestions: { type: Array, default: () => [] },
+  showSuggestions: { type: Boolean, default: false },
 });
 
 const emit = defineEmits([
@@ -129,13 +117,43 @@ const emit = defineEmits([
 const searchInput = ref(null);
 const isCoordinateFormat = ref(false);
 const coordinateApplied = ref(false);
+const coordinateFormatMessage = ref(
+  "Koordinat terdeteksi, tekan enter untuk menerapkan."
+);
 
-function isValidCoordinate(text) {
-  const coordPattern = /^-?\d+\.?\d*\s*,\s*-?\d+\.?\d*$/;
-  return coordPattern.test(text.trim());
+function dmsToDecimal(degrees, minutes, seconds, direction) {
+  let decimal =
+    parseFloat(degrees) + parseFloat(minutes) / 60 + parseFloat(seconds) / 3600;
+  if (direction === "S" || direction === "W") decimal *= -1;
+  return decimal;
 }
 
-function parseCoordinate(text) {
+function parseDMS(text) {
+  const dmsPattern =
+    /(\d+)[°d]\s*(\d+)['"′]\s*([\d.]+)["″'']\s*([NSEW])\s*,?\s*(\d+)[°d]\s*(\d+)['"′]\s*([\d.]+)["″'']\s*([NSEW])/i;
+  const match = text.trim().match(dmsPattern);
+
+  if (!match) return null;
+
+  const [, latDeg, latMin, latSec, latDir, lngDeg, lngMin, lngSec, lngDir] =
+    match;
+  const latDirection = latDir.toUpperCase();
+  const lngDirection = lngDir.toUpperCase();
+
+  if (!["N", "S"].includes(latDirection) || !["E", "W"].includes(lngDirection))
+    return null;
+
+  return {
+    lat: dmsToDecimal(latDeg, latMin, latSec, latDirection),
+    lng: dmsToDecimal(lngDeg, lngMin, lngSec, lngDirection),
+  };
+}
+
+function isValidDecimalCoordinate(text) {
+  return /^-?\d+\.?\d*\s*,\s*-?\d+\.?\d*$/.test(text.trim());
+}
+
+function parseDecimalCoordinate(text) {
   const parts = text
     .trim()
     .split(",")
@@ -146,29 +164,44 @@ function parseCoordinate(text) {
   return null;
 }
 
+function isValidCoordinate(text) {
+  return isValidDecimalCoordinate(text) || parseDMS(text) !== null;
+}
+
+function parseCoordinate(text) {
+  return (
+    parseDMS(text) ||
+    (isValidDecimalCoordinate(text) ? parseDecimalCoordinate(text) : null)
+  );
+}
+
 function handleInput(value) {
   emit("update:searchQuery", value);
   isCoordinateFormat.value = isValidCoordinate(value);
   coordinateApplied.value = false;
 
-  if (!isCoordinateFormat.value) {
-    emit("search");
+  if (isCoordinateFormat.value) {
+    coordinateFormatMessage.value = parseDMS(value)
+      ? "Koordinat DMS terdeteksi, tekan enter untuk menerapkan."
+      : "Koordinat desimal terdeteksi, tekan enter untuk menerapkan.";
   }
+
+  if (!isCoordinateFormat.value) emit("search");
 }
 
 function handleEnter() {
-  if (isCoordinateFormat.value) {
-    const coords = parseCoordinate(props.searchQuery);
-    if (
-      coords &&
-      coords.lat >= -90 &&
-      coords.lat <= 90 &&
-      coords.lng >= -180 &&
-      coords.lng <= 180
-    ) {
-      coordinateApplied.value = true;
-      emit("selectCoordinate", coords);
-    }
+  if (!isCoordinateFormat.value) return;
+
+  const coords = parseCoordinate(props.searchQuery);
+  if (
+    coords &&
+    coords.lat >= -90 &&
+    coords.lat <= 90 &&
+    coords.lng >= -180 &&
+    coords.lng <= 180
+  ) {
+    coordinateApplied.value = true;
+    emit("selectCoordinate", coords);
   }
 }
 </script>
