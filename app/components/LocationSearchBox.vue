@@ -99,6 +99,8 @@
 </template>
 
 <script setup>
+import { ref, watch, nextTick } from 'vue';
+
 const props = defineProps({
   isVisible: { type: Boolean, default: false },
   searchQuery: { type: String, default: "" },
@@ -120,6 +122,15 @@ const coordinateApplied = ref(false);
 const coordinateFormatMessage = ref(
   "Koordinat terdeteksi, tekan enter untuk menerapkan."
 );
+
+// Fokuskan input ketika form muncul
+watch(() => props.isVisible, (newValue) => {
+  if (newValue) {
+    nextTick(() => {
+      searchInput.value?.$el?.querySelector('input')?.focus();
+    });
+  }
+});
 
 function dmsToDecimal(degrees, minutes, seconds, direction) {
   let decimal =
