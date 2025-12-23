@@ -15,16 +15,13 @@
         class="backdrop-blur-xl bg-white/95 dark:bg-gray-900/95 shadow-2xl border border-gray-100 dark:border-gray-800"
       >
         <div class="space-y-3">
-          <!-- Judul -->
-          <div class="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-200">
-            <UIcon
-              name="i-lucide-search"
-              class="w-4 h-4 text-primary"
-            />
+          <div
+            class="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-200"
+          >
+            <UIcon name="i-lucide-search" class="w-4 h-4 text-primary" />
             <span>Cari Lokasi</span>
           </div>
 
-          <!-- Input Pencarian -->
           <div class="relative">
             <UInput
               ref="searchInput"
@@ -32,10 +29,10 @@
               icon="i-lucide-search"
               size="md"
               variant="outline"
-              placeholder="Ketik nama tempat atau alamat..."
+              placeholder="Nama tempat atau koordinat (lat, lng)..."
               class="w-full dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 dark:border-gray-700"
-              @update:model-value="$emit('update:searchQuery', $event)"
-              @input="$emit('search')"
+              @update:model-value="handleInput"
+              @keydown.enter="handleEnter"
             />
             <UIcon
               v-if="searchQuery"
@@ -44,10 +41,17 @@
               @click="$emit('clear')"
             />
           </div>
+
+          <div
+            v-if="isCoordinateFormat && !coordinateApplied"
+            class="flex items-center gap-2 text-xs text-green-600 dark:text-green-400"
+          >
+            <UIcon name="i-lucide-info" class="w-3 h-3" />
+            <span>Koordinat terdeteksi, tekan enter untuk menerapkan.</span>
+          </div>
         </div>
       </UCard>
 
-      <!-- Dropdown Saran -->
       <Transition
         enter-active-class="transition-all duration-200"
         enter-from-class="opacity-0 scale-95"
@@ -57,7 +61,9 @@
         leave-to-class="opacity-0 scale-95"
       >
         <div
-          v-if="showSuggestions && suggestions.length > 0"
+          v-if="
+            showSuggestions && suggestions.length > 0 && !isCoordinateFormat
+          "
           class="absolute mt-1 bg-white dark:bg-gray-900 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 max-h-60 overflow-y-auto z-50 w-100"
         >
           <button
@@ -72,11 +78,16 @@
                 class="w-4 h-4 text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0"
               />
               <div class="flex-1 min-w-0">
-                <div class="text-xs font-medium text-gray-900 dark:text-gray-100 truncate">
-                  {{ suggestion.structured_formatting?.main_text || suggestion.description }}
+                <div
+                  class="text-xs font-medium text-gray-900 dark:text-gray-100 truncate"
+                >
+                  {{
+                    suggestion.structured_formatting?.main_text ||
+                    suggestion.description
+                  }}
                 </div>
                 <div class="text-xs text-gray-500 dark:text-gray-400 truncate">
-                  {{ suggestion.structured_formatting?.secondary_text || '' }}
+                  {{ suggestion.structured_formatting?.secondary_text || "" }}
                 </div>
               </div>
             </div>
@@ -88,26 +99,76 @@
 </template>
 
 <script setup>
-defineProps({
+const props = defineProps({
   isVisible: {
     type: Boolean,
-    default: false
+    default: false,
   },
   searchQuery: {
     type: String,
-    default: ''
+    default: "",
   },
   suggestions: {
     type: Array,
-    default: () => []
+    default: () => [],
   },
   showSuggestions: {
     type: Boolean,
-    default: false
+    default: false,
+  },
+});
+
+const emit = defineEmits([
+  "update:searchQuery",
+  "search",
+  "clear",
+  "select",
+  "selectCoordinate",
+]);
+
+const searchInput = ref(null);
+const isCoordinateFormat = ref(false);
+const coordinateApplied = ref(false);
+
+function isValidCoordinate(text) {
+  const coordPattern = /^-?\d+\.?\d*\s*,\s*-?\d+\.?\d*$/;
+  return coordPattern.test(text.trim());
+}
+
+function parseCoordinate(text) {
+  const parts = text
+    .trim()
+    .split(",")
+    .map((p) => parseFloat(p.trim()));
+  if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+    return { lat: parts[0], lng: parts[1] };
   }
-})
+  return null;
+}
 
-defineEmits(['update:searchQuery', 'search', 'clear', 'select'])
+function handleInput(value) {
+  emit("update:searchQuery", value);
+  isCoordinateFormat.value = isValidCoordinate(value);
+  coordinateApplied.value = false;
 
-const searchInput = ref(null)
+  if (!isCoordinateFormat.value) {
+    emit("search");
+  }
+}
+
+function handleEnter() {
+  if (isCoordinateFormat.value) {
+    const coords = parseCoordinate(props.searchQuery);
+    if (
+      coords &&
+      coords.lat >= -90 &&
+      coords.lat <= 90 &&
+      coords.lng >= -180 &&
+      coords.lng <= 180
+    ) {
+      coordinateApplied.value = true;
+      emit("selectCoordinate", coords);
+    }
+  }
+}
 </script>

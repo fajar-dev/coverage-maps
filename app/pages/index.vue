@@ -19,6 +19,7 @@
         @search="onSearchInput"
         @clear="clearSearch"
         @select="selectSuggestion"
+        @select-coordinate="selectCoordinate"
       />
 
       <ControlPanel
@@ -68,293 +69,302 @@
 </template>
 
 <script setup>
-import { getCoverage } from '~/services/coverageService'
+import { getCoverage } from "~/services/coverageService";
 
-const config = useRuntimeConfig()
-const colorMode = useColorMode()
-const mapContainer = ref(null)
-const map = ref(null)
-const centerMarker = ref(null)
-const markers = ref([])
-const activeInfoWindow = ref(null)
-const activeCircle = ref(null)
-const loading = ref(false)
-const filterLoading = ref(false)
-const isControlOpen = ref(true)
-const isRelocateMode = ref(false)
-const isMeasureMode = ref(false)
-const measurePoints = ref([])
-const measureMarkers = ref([])
-const measurePolyline = ref(null)
-const totalDistance = ref('0m')
+const config = useRuntimeConfig();
+const colorMode = useColorMode();
+const mapContainer = ref(null);
+const map = ref(null);
+const centerMarker = ref(null);
+const markers = ref([]);
+const activeInfoWindow = ref(null);
+const activeCircle = ref(null);
+const loading = ref(false);
+const filterLoading = ref(false);
+const isControlOpen = ref(true);
+const isRelocateMode = ref(false);
+const isMeasureMode = ref(false);
+const measurePoints = ref([]);
+const measureMarkers = ref([]);
+const measurePolyline = ref(null);
+const totalDistance = ref("0m");
 
-const activeTab = ref('radius')
+const activeTab = ref("radius");
 
-const latitude = ref(3.576378)
-const longitude = ref(98.682272)
-const originalLatitude = ref(3.576378)
-const originalLongitude = ref(98.682272)
+const latitude = ref(3.576378);
+const longitude = ref(98.682272);
+const originalLatitude = ref(3.576378);
+const originalLongitude = ref(98.682272);
 
-const activeRadius = ref(200)
-const activeLimit = ref(10)
+const activeRadius = ref(200);
+const activeLimit = ref(10);
 
-const pendingRadius = ref(200)
-const pendingLimit = ref(10)
+const pendingRadius = ref(200);
+const pendingLimit = ref(10);
 
-const coverageData = ref([])
-const showLegend = ref(true)
-const searchQuery = ref('')
-const searchSuggestions = ref([])
-const showSuggestions = ref(false)
-const autocompleteService = ref(null)
-const placesService = ref(null)
+const coverageData = ref([]);
+const showLegend = ref(true);
+const searchQuery = ref("");
+const searchSuggestions = ref([]);
+const showSuggestions = ref(false);
+const autocompleteService = ref(null);
+const placesService = ref(null);
 
-const mapLoaded = ref(false)
-const mapReloadKey = ref(0)
-const hasLocationBeenSet = ref(false)
+const mapLoaded = ref(false);
+const mapReloadKey = ref(0);
+const hasLocationBeenSet = ref(false);
 
-const visibleTypes = ref({})
-const legendItems = ref([])
+const visibleTypes = ref({});
+const legendItems = ref([]);
 
 const lightMapStyles = [
-  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
-  { featureType: 'transit', stylers: [{ visibility: 'off' }] }
-]
+  { featureType: "poi", stylers: [{ visibility: "off" }] },
+  { featureType: "transit", stylers: [{ visibility: "off" }] },
+];
 
 const darkMapStyles = [
-  { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
+  { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
   {
-    featureType: 'administrative.locality',
-    elementType: 'labels.text.fill',
-    stylers: [{ color: '#d59563' }]
+    featureType: "administrative.locality",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#d59563" }],
   },
   {
-    featureType: 'poi',
-    elementType: 'labels.text.fill',
-    stylers: [{ color: '#d59563' }]
+    featureType: "poi",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#d59563" }],
   },
   {
-    featureType: 'poi',
-    stylers: [{ visibility: 'off' }]
+    featureType: "poi",
+    stylers: [{ visibility: "off" }],
   },
   {
-    featureType: 'poi.park',
-    elementType: 'geometry',
-    stylers: [{ color: '#263c3f' }]
+    featureType: "poi.park",
+    elementType: "geometry",
+    stylers: [{ color: "#263c3f" }],
   },
   {
-    featureType: 'poi.park',
-    elementType: 'labels.text.fill',
-    stylers: [{ color: '#6b9a76' }]
+    featureType: "poi.park",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#6b9a76" }],
   },
   {
-    featureType: 'road',
-    elementType: 'geometry',
-    stylers: [{ color: '#38414e' }]
+    featureType: "road",
+    elementType: "geometry",
+    stylers: [{ color: "#38414e" }],
   },
   {
-    featureType: 'road',
-    elementType: 'geometry.stroke',
-    stylers: [{ color: '#212a37' }]
+    featureType: "road",
+    elementType: "geometry.stroke",
+    stylers: [{ color: "#212a37" }],
   },
   {
-    featureType: 'road',
-    elementType: 'labels.text.fill',
-    stylers: [{ color: '#9ca5b3' }]
+    featureType: "road",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#9ca5b3" }],
   },
   {
-    featureType: 'road.highway',
-    elementType: 'geometry',
-    stylers: [{ color: '#746855' }]
+    featureType: "road.highway",
+    elementType: "geometry",
+    stylers: [{ color: "#746855" }],
   },
   {
-    featureType: 'road.highway',
-    elementType: 'geometry.stroke',
-    stylers: [{ color: '#1f2835' }]
+    featureType: "road.highway",
+    elementType: "geometry.stroke",
+    stylers: [{ color: "#1f2835" }],
   },
   {
-    featureType: 'road.highway',
-    elementType: 'labels.text.fill',
-    stylers: [{ color: '#f3d19c' }]
+    featureType: "road.highway",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#f3d19c" }],
   },
   {
-    featureType: 'transit',
-    elementType: 'geometry',
-    stylers: [{ color: '#2f3948' }]
+    featureType: "transit",
+    elementType: "geometry",
+    stylers: [{ color: "#2f3948" }],
   },
   {
-    featureType: 'transit',
-    stylers: [{ visibility: 'off' }]
+    featureType: "transit",
+    stylers: [{ visibility: "off" }],
   },
   {
-    featureType: 'transit.station',
-    elementType: 'labels.text.fill',
-    stylers: [{ color: '#d59563' }]
+    featureType: "transit.station",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#d59563" }],
   },
   {
-    featureType: 'water',
-    elementType: 'geometry',
-    stylers: [{ color: '#17263c' }]
+    featureType: "water",
+    elementType: "geometry",
+    stylers: [{ color: "#17263c" }],
   },
   {
-    featureType: 'water',
-    elementType: 'labels.text.fill',
-    stylers: [{ color: '#515c6d' }]
+    featureType: "water",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#515c6d" }],
   },
   {
-    featureType: 'water',
-    elementType: 'labels.text.stroke',
-    stylers: [{ color: '#17263c' }]
-  }
-]
+    featureType: "water",
+    elementType: "labels.text.stroke",
+    stylers: [{ color: "#17263c" }],
+  },
+];
 
 const currentMapStyles = computed(() => {
-  return colorMode.value === 'dark' ? darkMapStyles : lightMapStyles
-})
+  return colorMode.value === "dark" ? darkMapStyles : lightMapStyles;
+});
 
-watch(() => colorMode.value, (newMode) => {
-  if (map.value) {
-    map.value.setOptions({
-      styles: newMode === 'dark' ? darkMapStyles : lightMapStyles
-    })
+watch(
+  () => colorMode.value,
+  (newMode) => {
+    if (map.value) {
+      map.value.setOptions({
+        styles: newMode === "dark" ? darkMapStyles : lightMapStyles,
+      });
+    }
   }
-})
+);
 
 function calculateZoomLevel() {
-  if (activeTab.value === 'radius') {
-    const radius = activeRadius.value
-    if (radius <= 400) return 18
-    if (radius <= 800) return 17
-    if (radius <= 1500) return 16
-    if (radius <= 2000) return 15
-    return 10
+  if (activeTab.value === "radius") {
+    const radius = activeRadius.value;
+    if (radius <= 400) return 18;
+    if (radius <= 800) return 17;
+    if (radius <= 1500) return 16;
+    if (radius <= 2000) return 15;
+    return 10;
   } else {
-    if (markers.value.length === 0) return 17
+    if (markers.value.length === 0) return 17;
 
-    const center = { lat: latitude.value, lng: longitude.value }
-    let maxDistance = 0
+    const center = { lat: latitude.value, lng: longitude.value };
+    let maxDistance = 0;
 
     markers.value.forEach((marker) => {
       const distance = google.maps.geometry.spherical.computeDistanceBetween(
         new google.maps.LatLng(center.lat, center.lng),
         marker.getPosition()
-      )
-      maxDistance = Math.max(maxDistance, distance)
-    })
+      );
+      maxDistance = Math.max(maxDistance, distance);
+    });
 
-    if (maxDistance <= 200) return 19
-    if (maxDistance <= 400) return 18
-    if (maxDistance <= 800) return 17
-    if (maxDistance <= 1000) return 16
-    return 12
+    if (maxDistance <= 200) return 19;
+    if (maxDistance <= 400) return 18;
+    if (maxDistance <= 800) return 17;
+    if (maxDistance <= 1000) return 16;
+    return 12;
   }
 }
 
 function adjustZoomToContent() {
-  if (!map.value) return
+  if (!map.value) return;
 
-  const center = { lat: latitude.value, lng: longitude.value }
-  const zoomLevel = calculateZoomLevel()
+  const center = { lat: latitude.value, lng: longitude.value };
+  const zoomLevel = calculateZoomLevel();
 
-  map.value.setCenter(center)
-  map.value.setZoom(zoomLevel)
+  map.value.setCenter(center);
+  map.value.setZoom(zoomLevel);
 }
 
 function generateColor(str) {
-  let hash = 0
+  let hash = 0;
   for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash)
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
   }
 
-  const hue = Math.abs(hash % 360)
-  const saturation = 60 + (Math.abs(hash) % 20)
-  const lightness = 40 + (Math.abs(hash >> 8) % 20)
+  const hue = Math.abs(hash % 360);
+  const saturation = 60 + (Math.abs(hash) % 20);
+  const lightness = 40 + (Math.abs(hash >> 8) % 20);
 
-  return `hsl(${hue}, ${saturation}%, ${lightness}%)`
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 }
 
-watch(coverageData, (newData) => {
-  if (newData.length > 0) {
-    const uniqueTypes = [...new Set(newData.map(item => item.type))]
+watch(
+  coverageData,
+  (newData) => {
+    if (newData.length > 0) {
+      const uniqueTypes = [...new Set(newData.map((item) => item.type))];
 
-    legendItems.value = uniqueTypes.map(type => ({
-      type,
-      label: type,
-      color: generateColor(type),
-      count: newData.filter(item => item.type === type).length
-    }))
+      legendItems.value = uniqueTypes.map((type) => ({
+        type,
+        label: type,
+        color: generateColor(type),
+        count: newData.filter((item) => item.type === type).length,
+      }));
 
-    const newVisibleTypes = {}
-    uniqueTypes.forEach((type) => {
-      newVisibleTypes[type] = visibleTypes.value[type] !== undefined ? visibleTypes.value[type] : true
-    })
-    visibleTypes.value = newVisibleTypes
-  }
-}, { immediate: true, deep: true })
+      const newVisibleTypes = {};
+      uniqueTypes.forEach((type) => {
+        newVisibleTypes[type] =
+          visibleTypes.value[type] !== undefined
+            ? visibleTypes.value[type]
+            : true;
+      });
+      visibleTypes.value = newVisibleTypes;
+    }
+  },
+  { immediate: true, deep: true }
+);
 
 const filteredCoverageData = computed(() => {
-  return coverageData.value.filter(item => visibleTypes.value[item.type])
-})
+  return coverageData.value.filter((item) => visibleTypes.value[item.type]);
+});
 
-let searchTimeout = null
-let mapClickListener = null
+let searchTimeout = null;
+let mapClickListener = null;
 
 function getMarkerColor(type) {
-  const legend = legendItems.value.find(item => item.type === type)
-  return legend ? legend.color : '#9CA3AF'
+  const legend = legendItems.value.find((item) => item.type === type);
+  return legend ? legend.color : "#9CA3AF";
 }
 
 function clearAllMarkers() {
   if (markers.value && markers.value.length > 0) {
     markers.value.forEach((marker) => {
       if (marker) {
-        google.maps.event.clearInstanceListeners(marker)
-        marker.setVisible(false)
-        marker.setMap(null)
+        google.maps.event.clearInstanceListeners(marker);
+        marker.setVisible(false);
+        marker.setMap(null);
       }
-    })
+    });
   }
 
-  markers.value = []
+  markers.value = [];
 
   if (activeInfoWindow.value) {
-    activeInfoWindow.value.close()
-    activeInfoWindow.value.setMap(null)
-    activeInfoWindow.value = null
+    activeInfoWindow.value.close();
+    activeInfoWindow.value.setMap(null);
+    activeInfoWindow.value = null;
   }
 }
 
-watch(visibleTypes, async () => {
-  if (coverageData.value.length === 0 || !map.value) return
-  filterLoading.value = true
-  clearAllMarkers()
-  await new Promise(resolve => setTimeout(resolve, 300))
-  renderMarkers()
-  await new Promise(resolve => setTimeout(resolve, 200))
+watch(
+  visibleTypes,
+  async () => {
+    if (coverageData.value.length === 0 || !map.value) return;
+    filterLoading.value = true;
+    clearAllMarkers();
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    renderMarkers();
+    await new Promise((resolve) => setTimeout(resolve, 200));
 
-  filterLoading.value = false
-}, { deep: true })
+    filterLoading.value = false;
+  },
+  { deep: true }
+);
 
 function renderMarkers() {
-  if (!map.value) return
-  clearAllMarkers()
-  clearMeasurement()
+  if (!map.value) return;
+  clearAllMarkers();
+  clearMeasurement();
 
-  // Safety check: pastikan coverageData adalah array
-  if (!Array.isArray(coverageData.value) || coverageData.value.length === 0) {
-    console.log('No coverage data to render')
-    return
-  }
+  if (!Array.isArray(coverageData.value) || coverageData.value.length === 0)
+    return;
 
   coverageData.value.forEach((item) => {
-    if (!visibleTypes.value[item.type]) {
-      return
-    }
+    if (!visibleTypes.value[item.type]) return;
 
-    const [lat, lng] = item.coordinate.split(',').map(Number)
-    const markerColor = getMarkerColor(item.type)
+    const [lat, lng] = item.coordinate.split(",").map(Number);
+    const markerColor = getMarkerColor(item.type);
 
     const marker = new google.maps.Marker({
       position: { lat, lng },
@@ -366,221 +376,201 @@ function renderMarkers() {
         scale: 7,
         fillColor: markerColor,
         fillOpacity: 1,
-        strokeColor: '#fff',
-        strokeWeight: 1
-      }
-    })
+        strokeColor: "#fff",
+        strokeWeight: 1,
+      },
+    });
 
     const info = new google.maps.InfoWindow({
       content: `
     <div style="padding:10px;font-family:system-ui; max-width:240px;">
-      
       <div style="font-size:15px;font-weight:600;margin-bottom:4px;color:black !important;">
-        ${item.name ?? ''}
+        ${item.name ?? ""}
       </div>
-
       <div style="font-size:13px;color:#6B7280;">
         ${item.address}
       </div>
-
       ${
         item.serviceId
-          ? `
-        <div style="margin-top:6px;font-size:12px;font-weight:600;color:black !important;">
-          <strong>${item.serviceId}</strong>
-        </div>
-        `
-          : ''
+          ? `<div style="margin-top:6px;font-size:12px;font-weight:600;color:black !important;"><strong>${item.serviceId}</strong></div>`
+          : ""
       }
-
       ${
         item.homepassId
-          ? `
-        <div style="margin-top:6px;font-size:12px;font-weight:600;color:black !important;">
-          <strong>${item.homepassId}</strong>
-        </div>
-        `
-          : ''
+          ? `<div style="margin-top:6px;font-size:12px;font-weight:600;color:black !important;"><strong>${item.homepassId}</strong></div>`
+          : ""
       }
-
       ${
         item.splitterId
-          ? `
-        <div style="margin-top:6px;font-size:12px;font-weight:600;color:black !important;">
-          <strong>${item.splitterId}</strong>
-        </div>
-        `
-          : ''
+          ? `<div style="margin-top:6px;font-size:12px;font-weight:600;color:black !important;"><strong>${item.splitterId}</strong></div>`
+          : ""
       }
-
       <div style="margin-top:6px;font-size:12px;color:${markerColor};">
         <strong>${item.type}</strong>
       </div>
-
       <div style="font-size:12px;color:#00c951;">
         <strong>${item.distance.toFixed(0)}m</strong>
       </div>
-
     </div>
-  `
-    })
+  `,
+    });
 
-    marker.addListener('click', () => {
-      if (activeInfoWindow.value) activeInfoWindow.value.close()
-      info.open(map.value, marker)
-      activeInfoWindow.value = info
-    })
+    marker.addListener("click", () => {
+      if (activeInfoWindow.value) activeInfoWindow.value.close();
+      info.open(map.value, marker);
+      activeInfoWindow.value = info;
+    });
 
-    markers.value.push(marker)
-  })
+    markers.value.push(marker);
+  });
 
   setTimeout(() => {
-    adjustZoomToContent()
-  }, 100)
+    adjustZoomToContent();
+  }, 100);
 }
 
 watch(activeTab, (newTab, oldTab) => {
   if (oldTab !== undefined && map.value && mapLoaded.value) {
-    hardResetMap(false)
+    hardResetMap(false);
   }
-})
+});
 
 onMounted(() => {
-  hardResetMap(true)
-})
+  hardResetMap(true);
+});
 
 onBeforeUnmount(() => {
-  if (mapClickListener) google.maps.event.removeListener(mapClickListener)
-  if (searchTimeout) clearTimeout(searchTimeout)
-  clearMeasurement()
-})
+  if (mapClickListener) google.maps.event.removeListener(mapClickListener);
+  if (searchTimeout) clearTimeout(searchTimeout);
+  clearMeasurement();
+});
 
 async function hardResetMap(isInitialLoad = false) {
-  if (loading.value) return
+  if (loading.value) return;
 
-  activeRadius.value = pendingRadius.value
-  activeLimit.value = pendingLimit.value
+  activeRadius.value = pendingRadius.value;
+  activeLimit.value = pendingLimit.value;
 
-  mapLoaded.value = false
-  mapReloadKey.value++
+  mapLoaded.value = false;
+  mapReloadKey.value++;
 
-  await nextTick()
-  mapLoaded.value = true
-  await nextTick()
+  await nextTick();
+  mapLoaded.value = true;
+  await nextTick();
 
   if (isInitialLoad && !hasLocationBeenSet.value && navigator.geolocation) {
     try {
       const pos = await new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 })
-      })
-      latitude.value = pos.coords.latitude
-      longitude.value = pos.coords.longitude
-      originalLatitude.value = pos.coords.latitude
-      originalLongitude.value = pos.coords.longitude
-      hasLocationBeenSet.value = true
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          timeout: 5000,
+        });
+      });
+      latitude.value = pos.coords.latitude;
+      longitude.value = pos.coords.longitude;
+      originalLatitude.value = pos.coords.latitude;
+      originalLongitude.value = pos.coords.longitude;
+      hasLocationBeenSet.value = true;
     } catch {
-      hasLocationBeenSet.value = true
+      hasLocationBeenSet.value = true;
     }
   }
-  waitForGoogle()
+  waitForGoogle();
 }
 
 async function updateMapLocation() {
-  hasLocationBeenSet.value = true
+  hasLocationBeenSet.value = true;
 
-  mapLoaded.value = false
-  mapReloadKey.value++
-  await nextTick()
-  mapLoaded.value = true
-  await nextTick()
-  waitForGoogle()
+  mapLoaded.value = false;
+  mapReloadKey.value++;
+  await nextTick();
+  mapLoaded.value = true;
+  await nextTick();
+  waitForGoogle();
 }
 
 function returnToOriginalLocation() {
-  latitude.value = originalLatitude.value
-  longitude.value = originalLongitude.value
-  updateMapLocation()
+  latitude.value = originalLatitude.value;
+  longitude.value = originalLongitude.value;
+  updateMapLocation();
 }
 
 function waitForGoogle() {
-  if (window.google?.maps?.places) initMap()
-  else setTimeout(waitForGoogle, 200)
+  if (window.google?.maps?.places) initMap();
+  else setTimeout(waitForGoogle, 200);
 }
 
 function initMap() {
-  const center = { lat: latitude.value, lng: longitude.value }
+  const center = { lat: latitude.value, lng: longitude.value };
 
-  if (!mapContainer.value) return
+  if (!mapContainer.value) return;
 
-  const dynamicZoom = calculateZoomLevel()
+  const dynamicZoom = calculateZoomLevel();
 
   map.value = new google.maps.Map(mapContainer.value, {
     center,
     zoom: dynamicZoom,
-    mapTypeId: 'roadmap',
+    mapTypeId: "roadmap",
     zoomControl: true,
     fullscreenControl: true,
     mapTypeControl: false,
     streetViewControl: false,
-    styles: currentMapStyles.value
-  })
+    styles: currentMapStyles.value,
+  });
 
   if (window.google?.maps?.places) {
-    autocompleteService.value = new google.maps.places.AutocompleteService()
-    placesService.value = new google.maps.places.PlacesService(map.value)
+    autocompleteService.value = new google.maps.places.AutocompleteService();
+    placesService.value = new google.maps.places.PlacesService(map.value);
   }
 
-  map.value.setCenter(center)
-  setCenterMarker()
-  fetchCoverage()
+  map.value.setCenter(center);
+  setCenterMarker();
+  fetchCoverage();
 
-  if (mapClickListener) google.maps.event.removeListener(mapClickListener)
-  mapClickListener = map.value.addListener('click', (e) => {
+  if (mapClickListener) google.maps.event.removeListener(mapClickListener);
+  mapClickListener = map.value.addListener("click", (e) => {
     if (isRelocateMode.value) {
-      latitude.value = e.latLng.lat()
-      longitude.value = e.latLng.lng()
-      map.value.setCenter(e.latLng)
-
-      updateMapLocation()
-
-      isRelocateMode.value = false
+      latitude.value = e.latLng.lat();
+      longitude.value = e.latLng.lng();
+      map.value.setCenter(e.latLng);
+      updateMapLocation();
+      isRelocateMode.value = false;
     } else if (isMeasureMode.value) {
-      addMeasurePoint(e.latLng)
+      addMeasurePoint(e.latLng);
     } else if (activeInfoWindow.value) {
-      activeInfoWindow.value.close()
+      activeInfoWindow.value.close();
     }
-  })
+  });
 }
 
 function toggleRelocateMode() {
-  isRelocateMode.value = !isRelocateMode.value
+  isRelocateMode.value = !isRelocateMode.value;
   if (isRelocateMode.value) {
-    clearSearch()
+    clearSearch();
     if (isMeasureMode.value) {
-      isMeasureMode.value = false
-      clearMeasurement()
+      isMeasureMode.value = false;
+      clearMeasurement();
     }
   }
 }
 
 async function toggleMeasureMode() {
-  isMeasureMode.value = !isMeasureMode.value
+  isMeasureMode.value = !isMeasureMode.value;
   if (isMeasureMode.value) {
     if (isRelocateMode.value) {
-      isRelocateMode.value = false
-      clearSearch()
+      isRelocateMode.value = false;
+      clearSearch();
     }
-    clearMeasurement()
+    clearMeasurement();
   } else {
-    clearMeasurement()
-    await updateMapLocation()
+    clearMeasurement();
+    await updateMapLocation();
   }
 }
 
 function addMeasurePoint(latLng) {
-  if (!isMeasureMode.value) return
+  if (!isMeasureMode.value) return;
 
-  measurePoints.value.push(latLng)
+  measurePoints.value.push(latLng);
 
   const marker = new google.maps.Marker({
     position: latLng,
@@ -588,307 +578,311 @@ function addMeasurePoint(latLng) {
     icon: {
       path: google.maps.SymbolPath.CIRCLE,
       scale: 7,
-      fillColor: '#000000',
+      fillColor: "#000000",
       fillOpacity: 1,
-      strokeColor: '#ffffff',
-      strokeWeight: 1
+      strokeColor: "#ffffff",
+      strokeWeight: 1,
     },
-    zIndex: 1000
-  })
-  measureMarkers.value.push(marker)
+    zIndex: 1000,
+  });
+  measureMarkers.value.push(marker);
 
   if (measurePolyline.value) {
-    measurePolyline.value.setPath(measurePoints.value)
+    measurePolyline.value.setPath(measurePoints.value);
   } else {
     measurePolyline.value = new google.maps.Polyline({
       path: measurePoints.value,
       geodesic: true,
-      strokeColor: '#99a1af',
+      strokeColor: "#99a1af",
       strokeOpacity: 1,
       strokeWeight: 1,
       map: map.value,
-      icons: [{
-        icon: {
-          path: 'M 0,-1 0,1',
-          strokeOpacity: 1,
-          scale: 3
+      icons: [
+        {
+          icon: {
+            path: "M 0,-1 0,1",
+            strokeOpacity: 1,
+            scale: 3,
+          },
+          offset: "0",
+          repeat: "20px",
         },
-        offset: '0',
-        repeat: '20px'
-      }]
-    })
+      ],
+    });
   }
 
-  calculateDistance()
+  calculateDistance();
 }
 
 function calculateDistance() {
   if (measurePoints.value.length < 2) {
-    totalDistance.value = '0m'
-    return
+    totalDistance.value = "0m";
+    return;
   }
 
-  let distance = 0
+  let distance = 0;
   for (let i = 0; i < measurePoints.value.length - 1; i++) {
     distance += google.maps.geometry.spherical.computeDistanceBetween(
       measurePoints.value[i],
       measurePoints.value[i + 1]
-    )
+    );
   }
 
   if (distance >= 1000) {
-    totalDistance.value = (distance / 1000).toFixed(2) + 'km'
+    totalDistance.value = (distance / 1000).toFixed(2) + "km";
   } else {
-    totalDistance.value = Math.round(distance) + 'm'
+    totalDistance.value = Math.round(distance) + "m";
   }
 }
 
 function clearMeasurement() {
   if (measurePolyline.value) {
-    measurePolyline.value.setMap(null)
-    measurePolyline.value = null
+    measurePolyline.value.setMap(null);
+    measurePolyline.value = null;
   }
 
-  measurePoints.value = []
+  measurePoints.value = [];
 
   if (measureMarkers.value && measureMarkers.value.length > 0) {
     measureMarkers.value.forEach((marker) => {
       if (marker && marker.setMap) {
-        marker.setMap(null)
+        marker.setMap(null);
       }
-    })
+    });
   }
-  measureMarkers.value = []
+  measureMarkers.value = [];
 
-  totalDistance.value = '0m'
+  totalDistance.value = "0m";
 }
 
 function onSearchInput() {
-  if (searchTimeout) clearTimeout(searchTimeout)
+  if (searchTimeout) clearTimeout(searchTimeout);
 
   if (!searchQuery.value || searchQuery.value.length < 3) {
-    searchSuggestions.value = []
-    showSuggestions.value = false
-    return
+    searchSuggestions.value = [];
+    showSuggestions.value = false;
+    return;
   }
 
-  searchTimeout = setTimeout(searchPlaces, 300)
+  searchTimeout = setTimeout(searchPlaces, 300);
 }
 
 function searchPlaces() {
-  if (!autocompleteService.value || !searchQuery.value || !map.value) return
+  if (!autocompleteService.value || !searchQuery.value || !map.value) return;
 
   const request = {
     input: searchQuery.value,
-    componentRestrictions: { country: 'id' },
+    componentRestrictions: { country: "id" },
     location: map.value.getCenter(),
-    radius: 50000
-  }
+    radius: 50000,
+  };
 
-  autocompleteService.value.getPlacePredictions(request, (predictions, status) => {
-    if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
-      searchSuggestions.value = predictions
-      showSuggestions.value = true
-    } else {
-      searchSuggestions.value = []
-      showSuggestions.value = false
+  autocompleteService.value.getPlacePredictions(
+    request,
+    (predictions, status) => {
+      if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
+        searchSuggestions.value = predictions;
+        showSuggestions.value = true;
+      } else {
+        searchSuggestions.value = [];
+        showSuggestions.value = false;
+      }
     }
-  })
+  );
 }
 
 function selectSuggestion(suggestion) {
-  showSuggestions.value = false
-  searchQuery.value = suggestion.description
+  showSuggestions.value = false;
+  searchQuery.value = suggestion.description;
 
-  if (!placesService.value) return
+  if (!placesService.value) return;
 
   const request = {
     placeId: suggestion.place_id,
-    fields: ['geometry']
-  }
+    fields: ["geometry"],
+  };
 
   placesService.value.getDetails(request, (place, status) => {
-    if (status === google.maps.places.PlacesServiceStatus.OK && place.geometry) {
-      const location = place.geometry.location
-      latitude.value = location.lat()
-      longitude.value = location.lng()
-
-      updateMapLocation()
-
-      isRelocateMode.value = false
+    if (
+      status === google.maps.places.PlacesServiceStatus.OK &&
+      place.geometry
+    ) {
+      const location = place.geometry.location;
+      latitude.value = location.lat();
+      longitude.value = location.lng();
+      updateMapLocation();
+      isRelocateMode.value = false;
     }
-  })
+  });
+}
+
+function selectCoordinate(coords) {
+  if (
+    !coords ||
+    typeof coords.lat !== "number" ||
+    typeof coords.lng !== "number"
+  )
+    return;
+
+  latitude.value = coords.lat;
+  longitude.value = coords.lng;
+  updateMapLocation();
+  clearSearch();
+  isRelocateMode.value = false;
 }
 
 function clearSearch() {
-  searchQuery.value = ''
-  searchSuggestions.value = []
-  showSuggestions.value = false
+  searchQuery.value = "";
+  searchSuggestions.value = [];
+  showSuggestions.value = false;
 }
 
 function setCenterMarker() {
-  const pos = { lat: latitude.value, lng: longitude.value }
-  if (centerMarker.value) centerMarker.value.setMap(null)
+  const pos = { lat: latitude.value, lng: longitude.value };
+  if (centerMarker.value) centerMarker.value.setMap(null);
   centerMarker.value = new google.maps.Marker({
     position: pos,
     map: map.value,
-    title: 'Lokasi Saya',
+    title: "Lokasi Saya",
     icon: {
       path: google.maps.SymbolPath.CIRCLE,
       scale: 7,
-      fillColor: '#00c951',
+      fillColor: "#00c951",
       fillOpacity: 1,
-      strokeColor: '#ffffff',
-      strokeWeight: 1
-    }
-  })
+      strokeColor: "#ffffff",
+      strokeWeight: 1,
+    },
+  });
 }
 
 async function fetchCoverage() {
-  if (loading.value) return
-  loading.value = true
+  if (loading.value) return;
+  loading.value = true;
 
   try {
     if (activeCircle.value) {
-      activeCircle.value.setMap(null)
-      activeCircle.value = null
+      activeCircle.value.setMap(null);
+      activeCircle.value = null;
     }
 
-    clearAllMarkers()
-    coverageData.value = []
+    clearAllMarkers();
+    coverageData.value = [];
 
     const data = await getCoverage({
       apiUrl: config.public.apiUrl,
       longitude: longitude.value,
       latitude: latitude.value,
       mode: activeTab.value,
-      value: activeTab.value === 'radius' ? activeRadius.value : activeLimit.value
-    })
+      value:
+        activeTab.value === "radius" ? activeRadius.value : activeLimit.value,
+    });
 
-    // Debug: log format data dari backend
-    console.log('Data received from backend:', data)
-    console.log('Data type:', typeof data)
-    console.log('Is array?', Array.isArray(data))
-
-    // Handle berbagai format response
     if (Array.isArray(data)) {
-      // Jika response langsung array
-      coverageData.value = data
+      coverageData.value = data;
     } else if (data && Array.isArray(data.data)) {
-      // Jika response berupa { data: [...] }
-      coverageData.value = data.data
+      coverageData.value = data.data;
     } else if (data && Array.isArray(data.results)) {
-      // Jika response berupa { results: [...] }
-      coverageData.value = data.results
+      coverageData.value = data.results;
     } else {
-      // Format tidak dikenali
-      console.error('Unexpected data format:', data)
-      coverageData.value = []
+      coverageData.value = [];
     }
 
-    if (activeTab.value === 'radius') {
-      const center = { lat: latitude.value, lng: longitude.value }
+    if (activeTab.value === "radius") {
+      const center = { lat: latitude.value, lng: longitude.value };
       activeCircle.value = new google.maps.Circle({
-        strokeColor: '#00c951',
+        strokeColor: "#00c951",
         strokeOpacity: 0.8,
         strokeWeight: 2,
-        fillColor: '#75EDAE',
+        fillColor: "#75EDAE",
         fillOpacity: 0.15,
         map: map.value,
         center,
         radius: activeRadius.value,
-        clickable: false
-      })
+        clickable: false,
+      });
     }
 
-    renderMarkers()
+    renderMarkers();
   } catch (err) {
-    console.error(err)
-    coverageData.value = []
+    coverageData.value = [];
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
-// ============== EXPORT FUNCTION (TAMBAHAN BARU) ==============
 async function handleExportCoverage() {
   try {
-    // Filter hanya types yang visible (checked)
     const visibleTypesArray = legendItems.value
-      .filter(item => visibleTypes.value[item.type])
-      .map(item => item.type)
+      .filter((item) => visibleTypes.value[item.type])
+      .map((item) => item.type);
 
-    // Build URL
-    let url = `${config.public.apiUrl}/export?longitude=${longitude.value}&latitude=${latitude.value}`
+    let url = `${config.public.apiUrl}/export?longitude=${longitude.value}&latitude=${latitude.value}`;
 
-    if (activeTab.value === 'radius') {
-      url += `&radius=${activeRadius.value}`
-    } else if (activeTab.value === 'limit') {
-      url += `&limit=${activeLimit.value}`
+    if (activeTab.value === "radius") {
+      url += `&radius=${activeRadius.value}`;
+    } else if (activeTab.value === "limit") {
+      url += `&limit=${activeLimit.value}`;
     }
 
     if (visibleTypesArray.length > 0) {
-      const typeParam = encodeURIComponent(visibleTypesArray.join(','))
-      url += `&type=${typeParam}`
+      const typeParam = encodeURIComponent(visibleTypesArray.join(","));
+      url += `&type=${typeParam}`;
     }
 
-    // Fetch CSV
     const response = await fetch(url, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        Accept: 'text/csv'
-      }
-    })
+        Accept: "text/csv",
+      },
+    });
 
     if (!response.ok) {
-      console.error('Failed to export coverage', response.status, response.statusText)
-      throw new Error(`Export failed: ${response.status} ${response.statusText}`)
+      throw new Error(`Export failed: ${response.status}`);
     }
 
-    // Download file
-    const blob = await response.blob()
-    const blobUrl = window.URL.createObjectURL(blob)
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
 
-    const a = document.createElement('a')
-    a.href = blobUrl
+    const a = document.createElement("a");
+    a.href = blobUrl;
 
-    // Generate filename dengan timestamp
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5)
-    a.download = `coverage-${timestamp}.csv`
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/[:.]/g, "-")
+      .slice(0, -5);
+    a.download = `coverage-${timestamp}.csv`;
 
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
 
-    window.URL.revokeObjectURL(blobUrl)
-
-    console.log('Export berhasil!')
+    window.URL.revokeObjectURL(blobUrl);
   } catch (error) {
-    console.error('Export gagal:', error)
-    alert('Export gagal! Silakan coba lagi.')
+    alert("Export gagal! Silakan coba lagi.");
   }
 }
-// ============== END EXPORT FUNCTION ==============
 
 function focusOnMarker(index) {
-  const marker = markers.value[index]
+  const marker = markers.value[index];
   if (marker && map.value) {
-    map.value.setCenter(marker.getPosition())
-    map.value.setZoom(18)
-    google.maps.event.trigger(marker, 'click')
+    map.value.setCenter(marker.getPosition());
+    map.value.setZoom(18);
+    google.maps.event.trigger(marker, "click");
   }
 }
 
 function focusOnMarkerByItem(item) {
-  const index = coverageData.value.findIndex(data => data.id === item.id)
+  const index = coverageData.value.findIndex((data) => data.id === item.id);
   if (index !== -1) {
     const matchingMarkerIndex = markers.value.findIndex((marker, idx) => {
-      const markerItem = coverageData.value.filter(d => visibleTypes.value[d.type])[idx]
-      return markerItem && markerItem.id === item.id
-    })
+      const markerItem = coverageData.value.filter(
+        (d) => visibleTypes.value[d.type]
+      )[idx];
+      return markerItem && markerItem.id === item.id;
+    });
 
     if (matchingMarkerIndex !== -1) {
-      focusOnMarker(matchingMarkerIndex)
+      focusOnMarker(matchingMarkerIndex);
     }
   }
 }
