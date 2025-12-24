@@ -33,6 +33,7 @@
               class="w-full dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 dark:border-gray-700"
               @update:model-value="handleInput"
               @keydown.enter="handleEnter"
+              @keydown.esc="handleEscape"
             />
             <UIcon
               v-if="searchQuery"
@@ -114,6 +115,7 @@ const emit = defineEmits([
   "clear",
   "select",
   "selectCoordinate",
+  "close",
 ]);
 
 const searchInput = ref(null);
@@ -214,5 +216,9 @@ function handleEnter() {
     coordinateApplied.value = true;
     emit("selectCoordinate", coords);
   }
+}
+
+function handleEscape() {
+  emit("close");
 }
 </script>

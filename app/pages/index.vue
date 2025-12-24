@@ -20,6 +20,7 @@
         @clear="clearSearch"
         @select="selectSuggestion"
         @select-coordinate="selectCoordinate"
+        @close="isRelocateMode = false; clearSearch()"
       />
 
       <ControlPanel
