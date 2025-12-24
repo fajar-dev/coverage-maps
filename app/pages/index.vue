@@ -392,6 +392,11 @@ function renderMarkers() {
         ${item.address}
       </div>
       ${
+        item.customerId
+          ? `<div style="margin-top:6px;font-size:12px;font-weight:600;color:black !important;"><strong>${item.customerId}</strong></div>`
+          : ""
+      }
+      ${
         item.serviceId
           ? `<div style="margin-top:6px;font-size:12px;font-weight:600;color:black !important;"><strong>${item.serviceId}</strong></div>`
           : ""

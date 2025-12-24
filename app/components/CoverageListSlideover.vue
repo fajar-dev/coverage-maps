@@ -108,7 +108,25 @@
                   </div>
                 </div>
 
-                <div class="grid grid-cols-3 gap-4 mt-3">
+                <div class="grid grid-cols-3 gap-1 mt-3">
+                  <!-- CUSTOMER ID -->
+                  <div
+                    v-if="item.customerId"
+                    class="flex flex-col text-xs"
+                  >
+                    <div class="flex items-center gap-1 mb-1">
+                      <UIcon
+                        name="i-lucide-hash"
+                        class="w-3 h-3 text-gray-400 dark:text-gray-500"
+                      />
+                      <span class="text-gray-600 dark:text-gray-400">Customer ID:</span>
+                    </div>
+
+                    <span class="font-semibold text-gray-900 dark:text-gray-100">
+                      {{ item.customerId }}
+                    </span>
+                  </div>
+
                   <!-- SERVICE ID -->
                   <div
                     v-if="item.serviceId"
