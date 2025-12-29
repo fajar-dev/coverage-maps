@@ -1,10 +1,16 @@
 <template>
   <div>
-    <div class="absolute top-15 right-2.5 z-10">
-      <UColorModeButton class="w-10 h-10 flex items-center justify-center bg-white text-gray-600 shadow-md rounded-none hover:bg-gray-100 hover:text-gray-800 transition" />
+    <div class="absolute top-15 right-2.5 z-10 flex flex-col gap-2">
+      <UColorModeButton class="w-10 h-10 flex items-center justify-center bg-white text-gray-600 shadow-md rounded-none hover:bg-gray-100 hover:text-gray-800 transition"/>
+      <UButton
+        :icon="isSatellite ? 'i-lucide-map' : 'i-lucide-globe'"
+        size="lg"
+class="w-10 h-10 flex items-center justify-center bg-white text-gray-600 shadow-md rounded-none hover:bg-gray-100 hover:text-gray-800 transition"        variant="solid"
+        @click="$emit('toggleSatellite')"
+      />
     </div>
-    <div class="absolute bottom-50 right-3 z-10 flex flex-col gap-3 items-end">
-      <!-- Export Button - Fixed -->
+
+    <div class="absolute bottom-70 right-3 z-10 flex flex-col gap-3 items-end">
       <UButton
         icon="i-lucide-download"
         size="lg"
@@ -12,7 +18,7 @@
         variant="solid"
         @click="$emit('export')"
       />
-      <!-- Return to Location Button -->
+
       <UButton
         icon="i-lucide-map-pinned"
         size="lg"
@@ -21,7 +27,6 @@
         @click="$emit('returnToLocation')"
       />
 
-      <!-- Measure Tool Button -->
       <div class="flex items-center gap-2">
         <Transition name="fade">
           <div
@@ -45,7 +50,6 @@
       </div>
     </div>
 
-    <!-- Relocate Mode & View Results Buttons -->
     <div class="absolute bottom-6 right-15 z-10 flex flex-col gap-2 items-end">
       <div class="flex flex-col gap-2 w-32">
         <UButton
@@ -74,11 +78,27 @@ defineProps({
     type: Boolean,
     default: false
   },
+  isSatellite: {
+    type: Boolean,
+    default: false
+  },
   totalDistance: {
     type: String,
     default: '0m'
   }
 })
 
-defineEmits(['returnToLocation', 'toggleMeasure', 'toggleRelocate', 'export'])
+defineEmits(['returnToLocation', 'toggleMeasure', 'toggleRelocate', 'toggleSatellite', 'export'])
 </script>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

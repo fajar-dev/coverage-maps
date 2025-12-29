@@ -9,9 +9,10 @@
         :class="{ 'cursor-crosshair': isRelocateMode || isMeasureMode }"
       />
 
-      <RelocateNotification :is-active="isRelocateMode" />
+      <RelocateNotification v-if="!isStreetViewActive" :is-active="isRelocateMode" />
 
       <LocationSearchBox
+        v-if="!isStreetViewActive"
         v-model:search-query="searchQuery"
         :is-visible="isRelocateMode"
         :suggestions="searchSuggestions"
@@ -24,6 +25,7 @@
       />
 
       <ControlPanel
+        v-if="!isStreetViewActive"
         :is-open="isControlOpen"
         :active-tab="activeTab"
         :radius="pendingRadius"
@@ -37,12 +39,15 @@
       />
 
       <MapControls
+        v-if="!isStreetViewActive"
         :is-relocate-mode="isRelocateMode"
         :is-measure-mode="isMeasureMode"
+        :is-satellite="isSatellite"
         :total-distance="totalDistance"
         @return-to-location="returnToOriginalLocation"
         @toggle-measure="toggleMeasureMode"
         @toggle-relocate="toggleRelocateMode"
+        @toggle-satellite="toggleSatellite"
         @export="handleExportCoverage"
       >
         <template #slideover>
@@ -57,6 +62,7 @@
       </MapControls>
 
       <MapLegend
+        v-if="!isStreetViewActive"
         :is-visible="showLegend"
         :legend-items="legendItems"
         :visible-types="visibleTypes"
@@ -89,6 +95,8 @@ const measurePoints = ref([]);
 const measureMarkers = ref([]);
 const measurePolyline = ref(null);
 const totalDistance = ref("0m");
+const isSatellite = ref(false);
+const isStreetViewActive = ref(false);
 
 const activeTab = ref("radius");
 
@@ -219,13 +227,43 @@ const currentMapStyles = computed(() => {
 watch(
   () => colorMode.value,
   (newMode) => {
-    if (map.value) {
+    if (map.value && !isSatellite.value) {
       map.value.setOptions({
         styles: newMode === "dark" ? darkMapStyles : lightMapStyles,
       });
     }
   }
 );
+
+watch(isStreetViewActive, (isActive) => {
+  if (isActive) {
+    if (isRelocateMode.value) {
+      isRelocateMode.value = false;
+      clearSearch();
+    }
+    if (isMeasureMode.value) {
+      isMeasureMode.value = false;
+      clearMeasurement();
+    }
+    if (activeInfoWindow.value) {
+      activeInfoWindow.value.close();
+    }
+  }
+});
+
+function toggleSatellite() {
+  isSatellite.value = !isSatellite.value;
+  
+  if (map.value) {
+    if (isSatellite.value) {
+      map.value.setMapTypeId('satellite');
+      map.value.setOptions({ styles: [] });
+    } else {
+      map.value.setMapTypeId('roadmap');
+      map.value.setOptions({ styles: currentMapStyles.value });
+    }
+  }
+}
 
 function calculateZoomLevel() {
   if (activeTab.value === "radius") {
@@ -347,7 +385,6 @@ watch(
     await new Promise((resolve) => setTimeout(resolve, 300));
     renderMarkers();
     await new Promise((resolve) => setTimeout(resolve, 200));
-
     filterLoading.value = false;
   },
   { deep: true }
@@ -358,8 +395,7 @@ function renderMarkers() {
   clearAllMarkers();
   clearMeasurement();
 
-  if (!Array.isArray(coverageData.value) || coverageData.value.length === 0)
-    return;
+  if (!Array.isArray(coverageData.value) || coverageData.value.length === 0) return;
 
   coverageData.value.forEach((item) => {
     if (!visibleTypes.value[item.type]) return;
@@ -370,61 +406,48 @@ function renderMarkers() {
     const marker = new google.maps.Marker({
       position: { lat, lng },
       map: map.value,
-      title: item.residentName,
+      title: item.residentName || item.name,
       visible: true,
       icon: {
         path: google.maps.SymbolPath.CIRCLE,
-        scale: 7,
+        scale: 8,
         fillColor: markerColor,
         fillOpacity: 1,
         strokeColor: "#fff",
-        strokeWeight: 1,
+        strokeWeight: 2,
       },
+      optimized: false,
     });
 
-    const info = new google.maps.InfoWindow({
-      content: `
-    <div style="padding:10px;font-family:system-ui; max-width:240px;">
-      <div style="font-size:15px;font-weight:600;margin-bottom:4px;color:black !important;">
-        ${item.name ?? ""}
+    const infoContent = `
+      <div style="padding:12px;font-family:system-ui; max-width:260px; min-width:200px;">
+        <div style="font-size:16px;font-weight:600;margin-bottom:6px;color:#000 !important;">
+          ${item.name ?? "No Name"}
+        </div>
+        <div style="font-size:14px;color:#6B7280;margin-bottom:8px;">
+          ${item.address || "No Address"}
+        </div>
+        ${item.customerId ? `<div style="margin-top:4px;font-size:13px;color:#000 !important;"><strong>ID:</strong> ${item.customerId}</div>` : ""}
+        ${item.serviceId ? `<div style="margin-top:4px;font-size:13px;color:#000 !important;"><strong>Service:</strong> ${item.serviceId}</div>` : ""}
+        ${item.homepassId ? `<div style="margin-top:4px;font-size:13px;color:#000 !important;"><strong>Homepass:</strong> ${item.homepassId}</div>` : ""}
+        ${item.splitterId ? `<div style="margin-top:4px;font-size:13px;color:#000 !important;"><strong>Splitter:</strong> ${item.splitterId}</div>` : ""}
+        <div style="margin-top:8px;padding-top:8px;border-top:1px solid #e5e7eb;">
+          <span style="font-size:13px;color:${markerColor};font-weight:600;">${item.type}</span>
+          <span style="float:right;font-size:13px;color:#00c951;font-weight:600;">${item.distance.toFixed(0)}m</span>
+        </div>
       </div>
-      <div style="font-size:13px;color:#6B7280;">
-        ${item.address}
-      </div>
-      ${
-        item.customerId
-          ? `<div style="margin-top:6px;font-size:12px;font-weight:600;color:black !important;"><strong>${item.customerId}</strong></div>`
-          : ""
-      }
-      ${
-        item.serviceId
-          ? `<div style="margin-top:6px;font-size:12px;font-weight:600;color:black !important;"><strong>${item.serviceId}</strong></div>`
-          : ""
-      }
-      ${
-        item.homepassId
-          ? `<div style="margin-top:6px;font-size:12px;font-weight:600;color:black !important;"><strong>${item.homepassId}</strong></div>`
-          : ""
-      }
-      ${
-        item.splitterId
-          ? `<div style="margin-top:6px;font-size:12px;font-weight:600;color:black !important;"><strong>${item.splitterId}</strong></div>`
-          : ""
-      }
-      <div style="margin-top:6px;font-size:12px;color:${markerColor};">
-        <strong>${item.type}</strong>
-      </div>
-      <div style="font-size:12px;color:#00c951;">
-        <strong>${item.distance.toFixed(0)}m</strong>
-      </div>
-    </div>
-  `,
+    `;
+
+    const infoWindow = new google.maps.InfoWindow({
+      content: infoContent,
     });
 
     marker.addListener("click", () => {
-      if (activeInfoWindow.value) activeInfoWindow.value.close();
-      info.open(map.value, marker);
-      activeInfoWindow.value = info;
+      if (activeInfoWindow.value) {
+        activeInfoWindow.value.close();
+      }
+      infoWindow.open(map.value, marker);
+      activeInfoWindow.value = infoWindow;
     });
 
     markers.value.push(marker);
@@ -449,6 +472,11 @@ onBeforeUnmount(() => {
   if (mapClickListener) google.maps.event.removeListener(mapClickListener);
   if (searchTimeout) clearTimeout(searchTimeout);
   clearMeasurement();
+  
+  if (activeInfoWindow.value) {
+    activeInfoWindow.value.close();
+    activeInfoWindow.value = null;
+  }
 });
 
 async function hardResetMap(isInitialLoad = false) {
@@ -515,12 +543,12 @@ function initMap() {
   map.value = new google.maps.Map(mapContainer.value, {
     center,
     zoom: dynamicZoom,
-    mapTypeId: "roadmap",
+    mapTypeId: isSatellite.value ? 'satellite' : 'roadmap',
     zoomControl: true,
     fullscreenControl: true,
     mapTypeControl: false,
-    streetViewControl: false,
-    styles: currentMapStyles.value,
+    streetViewControl: true,
+    styles: isSatellite.value ? [] : currentMapStyles.value,
   });
 
   if (window.google?.maps?.places) {
@@ -531,6 +559,13 @@ function initMap() {
   map.value.setCenter(center);
   setCenterMarker();
   fetchCoverage();
+
+  const streetView = map.value.getStreetView();
+  if (streetView) {
+    streetView.addListener('visible_changed', () => {
+      isStreetViewActive.value = streetView.getVisible();
+    });
+  }
 
   if (mapClickListener) google.maps.event.removeListener(mapClickListener);
   mapClickListener = map.value.addListener("click", (e) => {
@@ -683,18 +718,15 @@ function searchPlaces() {
     radius: 50000,
   };
 
-  autocompleteService.value.getPlacePredictions(
-    request,
-    (predictions, status) => {
-      if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
-        searchSuggestions.value = predictions;
-        showSuggestions.value = true;
-      } else {
-        searchSuggestions.value = [];
-        showSuggestions.value = false;
-      }
+  autocompleteService.value.getPlacePredictions(request, (predictions, status) => {
+    if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
+      searchSuggestions.value = predictions;
+      showSuggestions.value = true;
+    } else {
+      searchSuggestions.value = [];
+      showSuggestions.value = false;
     }
-  );
+  });
 }
 
 function selectSuggestion(suggestion) {
@@ -709,10 +741,7 @@ function selectSuggestion(suggestion) {
   };
 
   placesService.value.getDetails(request, (place, status) => {
-    if (
-      status === google.maps.places.PlacesServiceStatus.OK &&
-      place.geometry
-    ) {
+    if (status === google.maps.places.PlacesServiceStatus.OK && place.geometry) {
       const location = place.geometry.location;
       latitude.value = location.lat();
       longitude.value = location.lng();
@@ -723,12 +752,7 @@ function selectSuggestion(suggestion) {
 }
 
 function selectCoordinate(coords) {
-  if (
-    !coords ||
-    typeof coords.lat !== "number" ||
-    typeof coords.lng !== "number"
-  )
-    return;
+  if (!coords || typeof coords.lat !== "number" || typeof coords.lng !== "number") return;
 
   latitude.value = coords.lat;
   longitude.value = coords.lng;
@@ -746,18 +770,21 @@ function clearSearch() {
 function setCenterMarker() {
   const pos = { lat: latitude.value, lng: longitude.value };
   if (centerMarker.value) centerMarker.value.setMap(null);
+  
   centerMarker.value = new google.maps.Marker({
     position: pos,
     map: map.value,
     title: "Lokasi Saya",
     icon: {
       path: google.maps.SymbolPath.CIRCLE,
-      scale: 7,
+      scale: 9,
       fillColor: "#00c951",
       fillOpacity: 1,
       strokeColor: "#ffffff",
-      strokeWeight: 1,
+      strokeWeight: 2,
     },
+    optimized: false,
+    zIndex: 1000,
   });
 }
 
@@ -779,8 +806,7 @@ async function fetchCoverage() {
       longitude: longitude.value,
       latitude: latitude.value,
       mode: activeTab.value,
-      value:
-        activeTab.value === "radius" ? activeRadius.value : activeLimit.value,
+      value: activeTab.value === "radius" ? activeRadius.value : activeLimit.value,
     });
 
     if (Array.isArray(data)) {
