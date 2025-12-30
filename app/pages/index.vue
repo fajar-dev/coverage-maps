@@ -76,7 +76,7 @@
 </template>
 
 <script setup>
-import { getCoverage } from "~/services/coverageService";
+import { coverageService } from "~/services/coverageService";
 
 const config = useRuntimeConfig();
 const colorMode = useColorMode();
@@ -801,8 +801,7 @@ async function fetchCoverage() {
     clearAllMarkers();
     coverageData.value = [];
 
-    const data = await getCoverage({
-      apiUrl: config.public.apiUrl,
+    const data = await coverageService.getCoverage({
       longitude: longitude.value,
       latitude: latitude.value,
       mode: activeTab.value,
@@ -848,47 +847,13 @@ async function handleExportCoverage() {
       .filter((item) => visibleTypes.value[item.type])
       .map((item) => item.type);
 
-    let url = `${config.public.apiUrl}/export?longitude=${longitude.value}&latitude=${latitude.value}`;
-
-    if (activeTab.value === "radius") {
-      url += `&radius=${activeRadius.value}`;
-    } else if (activeTab.value === "limit") {
-      url += `&limit=${activeLimit.value}`;
-    }
-
-    if (visibleTypesArray.length > 0) {
-      const typeParam = encodeURIComponent(visibleTypesArray.join(","));
-      url += `&type=${typeParam}`;
-    }
-
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        Accept: "text/csv",
-      },
+    await coverageService.exportCoverage({
+      longitude: longitude.value,
+      latitude: latitude.value,
+      mode: activeTab.value,
+      value: activeTab.value === "radius" ? activeRadius.value : activeLimit.value,
+      types: visibleTypesArray,
     });
-
-    if (!response.ok) {
-      throw new Error(`Export failed: ${response.status}`);
-    }
-
-    const blob = await response.blob();
-    const blobUrl = window.URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = blobUrl;
-
-    const timestamp = new Date()
-      .toISOString()
-      .replace(/[:.]/g, "-")
-      .slice(0, -5);
-    a.download = `coverage-${timestamp}.csv`;
-
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-
-    window.URL.revokeObjectURL(blobUrl);
   } catch (error) {
     alert("Export gagal! Silakan coba lagi.");
   }

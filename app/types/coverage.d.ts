@@ -6,7 +6,7 @@ export interface CoverageItem {
   type: string
 }
 
-interface GetCoverageParams {
+export interface GetCoverageParams {
   apiUrl: string
   longitude: number
   latitude: number
@@ -17,4 +17,8 @@ interface GetCoverageParams {
 export interface CoverageResponse {
   success: boolean
   data: CoverageItem[]
+}
+
+export interface ExportCoverageParams extends GetCoverageParams {
+  types?: string[]
 }

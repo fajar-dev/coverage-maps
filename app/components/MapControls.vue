@@ -12,9 +12,30 @@
     </div>
 
     <div class="absolute top-2.5 right-15 z-10 flex flex-col gap-2">
+      <UDropdown
+        v-if="user"
+        :items="userDropdownItems"
+        :popper="{ placement: 'bottom-end' }"
+      >
+        <UButton
+          color="white"
+          variant="solid"
+          class="shadow-md rounded-full pl-1 pr-3 py-1 flex items-center gap-2"
+        >
+          <UAvatar
+            :src="user.avatar"
+            :alt="user.name"
+            size="2xs"
+          />
+          <span class="text-gray-700 text-sm font-medium">{{ user.name }}</span>
+        </UButton>
+      </UDropdown>
+
       <UButton
+        v-else
         size="lg"
-        variant="solid"
+        variant="soft"
+        color="neutral"
         class="flex items-center justify-center bg-white text-gray-600 shadow-md rounded-full hover:bg-gray-100 hover:text-gray-800 transition"
         :loading="googleLoading"
         @click="handleGoogleLogin"
@@ -86,17 +107,28 @@
 
 <script setup>
 const toast = useToast()
+import { authService } from "~/services/authService"
+
 const googleLoading = ref(false)
+const user = authService.user
+
+const userDropdownItems = computed(() => [
+  [{
+    label: 'Logout',
+    icon: 'i-lucide-log-out',
+    click: () => {
+      authService.logout()
+      toast.add({ title: 'Logged out successfully' })
+    }
+  }]
+])
 
 const handleOnSuccess = async (response) => {
   try {
-    const result = await $fetch("/api/auth/google", {
-      method: "POST",
-      body: { code: response.code },
-    });
-    toast.add({ title: 'Login Successful', color: 'green' })
+    const result = await authService.googleLogin(response.code);
+    toast.add({ title: 'Login Successful', color: 'primary' })
   } catch (error) {
-    toast.add({ title: 'Authentication failed', color: 'red' })
+    toast.add({ title: 'Authentication failed', color: 'error' })
   } finally {
     googleLoading.value = false
   }
@@ -104,7 +136,7 @@ const handleOnSuccess = async (response) => {
 
 const handleOnError = (errorResponse) => {
   googleLoading.value = false
-  toast.add({ title: 'Google Sign-In Error', color: 'red' })
+  toast.add({ title: 'Google Sign-In Error', color: 'error' })
 };
 
 const { isReady, login } = useCodeClient({

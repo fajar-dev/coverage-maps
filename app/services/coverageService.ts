@@ -1,86 +1,78 @@
-interface GetCoverageParams {
-  apiUrl: string
-  longitude: number
-  latitude: number
-  mode: 'radius' | 'limit'
-  value: number
-}
+import type { ExportCoverageParams, GetCoverageParams } from "~/types/coverage"
+import { apiService } from "./apiService"
 
-interface ExportCoverageParams extends GetCoverageParams {
-  types?: string[]
-}
+export class CoverageService {
+  async getCoverage({
+    longitude,
+    latitude,
+    mode,
+    value
+  }: Omit<GetCoverageParams, 'apiUrl'>) {
+    const params: any = { longitude, latitude }
 
-export async function getCoverage({
-  apiUrl,
-  longitude,
-  latitude,
-  mode,
-  value
-}: GetCoverageParams) {
-  let url = `${apiUrl}/coverage?longitude=${longitude}&latitude=${latitude}`
-
-  if (mode === 'radius') {
-    url += `&radius=${value}`
-  } else if (mode === 'limit') {
-    url += `&limit=${value}`
-  }
-
-  const response = await fetch(url)
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch coverage: ${response.statusText}`)
-  }
-
-  return response.json()
-}
-
-export async function exportCoverage({
-  apiUrl,
-  longitude,
-  latitude,
-  mode,
-  value,
-  types
-}: ExportCoverageParams): Promise<void> {
-  if (typeof window === 'undefined') return
-
-  let url = `${apiUrl}/export?longitude=${longitude}&latitude=${latitude}`
-
-  if (mode === 'radius') {
-    url += `&radius=${value}`
-  } else if (mode === 'limit') {
-    url += `&limit=${value}`
-  }
-
-  if (types && types.length > 0) {
-    const typeParam = encodeURIComponent(types.join(','))
-    url += `&type=${typeParam}`
-  }
-
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      Accept: 'text/csv'
+    if (mode === 'radius') {
+      params['radius'] = value
+    } else if (mode === 'limit') {
+      params['limit'] = value
     }
-  })
 
-  if (!response.ok) {
-    console.error('Failed to export coverage', response.status, response.statusText)
-    throw new Error(`Export failed: ${response.status} ${response.statusText}`)
+    try {
+      const response = await apiService.client.get('/coverage', { params })
+      return response.data
+    } catch (error: any) {
+      throw new Error(`Failed to fetch coverage: ${error.message}`)
+    }
   }
 
-  const blob = await response.blob()
-  const blobUrl = window.URL.createObjectURL(blob)
+  async exportCoverage({
+    longitude,
+    latitude,
+    mode,
+    value,
+    types
+  }: Omit<ExportCoverageParams, 'apiUrl'>): Promise<void> {
+    if (typeof window === 'undefined') return
 
-  const a = document.createElement('a')
-  a.href = blobUrl
+    const params: any = { longitude, latitude }
 
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5)
-  a.download = `coverage-${timestamp}.csv`
+    if (mode === 'radius') {
+      params['radius'] = value
+    } else if (mode === 'limit') {
+      params['limit'] = value
+    }
 
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
+    if (types && types.length > 0) {
+      params['type'] = types.join(',')
+    }
 
-  window.URL.revokeObjectURL(blobUrl)
+    try {
+      const response = await apiService.client.get('/export', {
+        params,
+        responseType: 'blob',
+        headers: {
+          Accept: 'text/csv'
+        }
+      })
+
+      const blob = new Blob([response.data])
+      const blobUrl = window.URL.createObjectURL(blob)
+
+      const a = document.createElement('a')
+      a.href = blobUrl
+
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5)
+      a.download = `coverage-${timestamp}.csv`
+
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+
+      window.URL.revokeObjectURL(blobUrl)
+    } catch (error: any) {
+      console.error('Failed to export coverage', error)
+      throw new Error(`Export failed: ${error.message}`)
+    }
+  }
 }
+
+export const coverageService = new CoverageService()
