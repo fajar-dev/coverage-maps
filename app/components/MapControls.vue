@@ -5,9 +5,25 @@
       <UButton
         :icon="isSatellite ? 'i-lucide-map' : 'i-lucide-globe'"
         size="lg"
-class="w-10 h-10 flex items-center justify-center bg-white text-gray-600 shadow-md rounded-none hover:bg-gray-100 hover:text-gray-800 transition"        variant="solid"
+        class="w-10 h-10 flex items-center justify-center bg-white text-gray-600 shadow-md rounded-none hover:bg-gray-100 hover:text-gray-800 transition"
+        variant="solid"
         @click="$emit('toggleSatellite')"
       />
+    </div>
+
+    <div class="absolute top-2.5 right-15 z-10 flex flex-col gap-2">
+      <UButton
+        size="lg"
+        variant="solid"
+        class="flex items-center justify-center bg-white text-gray-600 shadow-md rounded-full hover:bg-gray-100 hover:text-gray-800 transition"
+        :loading="googleLoading"
+        @click="handleGoogleLogin"
+      >
+        <template v-if="!googleLoading" #leading>
+          <Icon name="logos:google-icon" class="w-5 h-5" />
+        </template>
+        {{ googleLoading ? 'Signing in...' : 'Sign In with Google' }}
+      </UButton>
     </div>
 
     <div class="absolute bottom-70 right-3 z-10 flex flex-col gap-3 items-end">
@@ -69,36 +85,45 @@ class="w-10 h-10 flex items-center justify-center bg-white text-gray-600 shadow-
 </template>
 
 <script setup>
-defineProps({
-  isRelocateMode: {
-    type: Boolean,
-    default: false
-  },
-  isMeasureMode: {
-    type: Boolean,
-    default: false
-  },
-  isSatellite: {
-    type: Boolean,
-    default: false
-  },
-  totalDistance: {
-    type: String,
-    default: '0m'
+const toast = useToast()
+const googleLoading = ref(false)
+
+const handleOnSuccess = async (response) => {
+  try {
+    const result = await $fetch("/api/auth/google", {
+      method: "POST",
+      body: { code: response.code },
+    });
+    toast.add({ title: 'Login Successful', color: 'green' })
+  } catch (error) {
+    toast.add({ title: 'Authentication failed', color: 'red' })
+  } finally {
+    googleLoading.value = false
   }
+};
+
+const handleOnError = (errorResponse) => {
+  googleLoading.value = false
+  toast.add({ title: 'Google Sign-In Error', color: 'red' })
+};
+
+const { isReady, login } = useCodeClient({
+  onSuccess: handleOnSuccess,
+  onError: handleOnError,
+});
+
+const handleGoogleLogin = () => {
+  if (!isReady.value) return
+  googleLoading.value = true
+  login()
+}
+
+defineProps({
+  isRelocateMode: { type: Boolean, default: false },
+  isMeasureMode: { type: Boolean, default: false },
+  isSatellite: { type: Boolean, default: false },
+  totalDistance: { type: String, default: '0m' }
 })
 
 defineEmits(['returnToLocation', 'toggleMeasure', 'toggleRelocate', 'toggleSatellite', 'export'])
 </script>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-</style>

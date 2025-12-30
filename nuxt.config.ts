@@ -1,6 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  modules: ['@nuxt/eslint', '@nuxt/ui'],
+  modules: ['@nuxt/eslint', '@nuxt/ui', 'nuxt-vue3-google-signin'],
 
   devtools: {
     enabled: true
@@ -17,9 +17,13 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
+      apiUrl: process.env.NUXT_PUBLIC_API_BASE || 'https://alas.nusa.id/api',
       googleMapsApiKey: process.env.NUXT_GOOGLE_MAPS_API_KEY,
-      apiUrl: process.env.NUXT_PUBLIC_API_BASE || 'https://alas.nusa.id/api'
     }
+  },
+
+  googleSignIn: {
+    clientId: process.env.NUXT_GOOGLE_CLIENT_ID,
   },
 
   routeRules: {
