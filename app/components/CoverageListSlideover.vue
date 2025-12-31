@@ -16,7 +16,6 @@
 
     <template #body>
       <div class="h-full overflow-y-auto">
-        <!-- FILTER DINONAKTIFKAN -->
         <div
           v-if="filteredCount === 0 && totalCount > 0"
           class="flex flex-col items-center justify-center py-16 px-6 h-full"
@@ -35,7 +34,6 @@
           </p>
         </div>
 
-        <!-- BELUM ADA DATA -->
         <div
           v-else-if="totalCount === 0"
           class="flex flex-col items-center justify-center py-16 px-6 h-full"
@@ -54,7 +52,6 @@
           </p>
         </div>
 
-        <!-- DAFTAR ITEM -->
         <div
           v-else
           class="divide-y divide-gray-200 dark:divide-gray-700"

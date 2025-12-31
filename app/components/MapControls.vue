@@ -20,9 +20,10 @@
         <UButton
           color="white"
           variant="solid"
-          class="h-10 bg-white text-gray-700 shadow-md border border-gray-200
-                rounded-full px-2 sm:px-3 flex items-center gap-2
-                hover:bg-gray-100 transition min-w-[40px] justify-center"
+          class="h-10 shadow-md border rounded-full px-2 sm:px-3 flex items-center gap-2
+                transition min-w-[40px] justify-center
+                bg-white text-gray-700 border-gray-200 hover:bg-gray-100
+                dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
         >
           <UAvatar
             :src="user.picture"
@@ -32,7 +33,10 @@
           <span class="text-sm font-medium max-w-[140px] truncate hidden sm:block">
             {{ user.name }}
           </span>
-          <UIcon name="i-lucide-chevron-down" class="w-4 h-4 text-gray-500 hidden sm:block" />
+          <UIcon
+            name="i-lucide-chevron-down"
+            class="w-4 h-4 hidden sm:block text-gray-500 dark:text-gray-300"
+          />
         </UButton>
       </UDropdownMenu>
 
@@ -40,9 +44,11 @@
         v-else
         color="white"
         variant="solid"
-        class="h-10 bg-white text-gray-700 shadow-md border border-gray-200
-              rounded-full px-0 sm:px-3 flex items-center justify-center gap-2
-              hover:bg-gray-100 transition w-10 sm:w-auto"
+        class="h-10 shadow-md border rounded-full
+              flex items-center justify-center gap-2 transition
+              px-0 sm:px-3 w-10 sm:w-auto
+              bg-white text-gray-700 border-gray-200 hover:bg-gray-100
+              dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
         :loading="googleLoading"
         @click="handleGoogleLogin"
       >
@@ -54,6 +60,7 @@
         </span>
       </UButton>
     </div>
+
 
     <div class="absolute bottom-70 right-3 z-10 flex flex-col gap-3 items-end">
       <UButton
