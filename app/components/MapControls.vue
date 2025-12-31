@@ -11,7 +11,7 @@
       />
     </div>
 
-    <div class="absolute top-3 right-16 z-10 flex flex-col gap-2">
+    <div class="absolute top-40 right-2.5 sm:top-3 sm:right-16 z-10 flex flex-col gap-2">
       <UDropdownMenu
         v-if="user"
         :items="userDropdownItems"
@@ -21,18 +21,18 @@
           color="white"
           variant="solid"
           class="h-10 bg-white text-gray-700 shadow-md border border-gray-200
-                rounded-full px-3 flex items-center gap-2
-                hover:bg-gray-100 transition"
+                rounded-full px-2 sm:px-3 flex items-center gap-2
+                hover:bg-gray-100 transition min-w-[40px] justify-center"
         >
           <UAvatar
             :src="user.picture"
             :alt="user.name"
             size="2xs"
           />
-          <span class="text-sm font-medium max-w-[140px] truncate">
+          <span class="text-sm font-medium max-w-[140px] truncate hidden sm:block">
             {{ user.name }}
           </span>
-          <UIcon name="i-lucide-chevron-down" class="w-4 h-4 text-gray-500" />
+          <UIcon name="i-lucide-chevron-down" class="w-4 h-4 text-gray-500 hidden sm:block" />
         </UButton>
       </UDropdownMenu>
 
@@ -41,20 +41,23 @@
         color="white"
         variant="solid"
         class="h-10 bg-white text-gray-700 shadow-md border border-gray-200
-              rounded-full px-3 flex items-center gap-2
-              hover:bg-gray-100 transition"
+              rounded-full px-0 sm:px-3 flex items-center justify-center gap-2
+              hover:bg-gray-100 transition w-10 sm:w-auto"
         :loading="googleLoading"
         @click="handleGoogleLogin"
       >
         <template v-if="!googleLoading" #leading>
-          <Icon name="logos:google-icon" class="w-5 h-5" />
+          <Icon name="logos:google-icon" class="w-5 h-5 shrink-0" />
         </template>
-        {{ googleLoading ? 'Signing in...' : 'Sign In with Google' }}
+        <span class="hidden sm:inline whitespace-nowrap">
+          {{ googleLoading ? 'Signing in...' : 'Sign In with Google' }}
+        </span>
       </UButton>
     </div>
 
     <div class="absolute bottom-70 right-3 z-10 flex flex-col gap-3 items-end">
       <UButton
+        v-if="user"
         icon="i-lucide-download"
         size="lg"
         class="w-12 h-12 flex items-center justify-center bg-white text-gray-600 shadow-md rounded-full hover:bg-gray-100 hover:text-gray-800 transition"

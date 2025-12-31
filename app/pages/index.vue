@@ -423,15 +423,15 @@ function renderMarkers() {
     const infoContent = `
       <div style="padding:12px;font-family:system-ui; max-width:260px; min-width:200px;">
         <div style="font-size:16px;font-weight:600;margin-bottom:6px;color:#000 !important;">
-          ${item.name ?? "No Name"}
+          ${item.name ?? ''}
         </div>
         <div style="font-size:14px;color:#6B7280;margin-bottom:8px;">
           ${item.address || "No Address"}
         </div>
-        ${item.customerId ? `<div style="margin-top:4px;font-size:13px;color:#000 !important;"><strong>ID:</strong> ${item.customerId}</div>` : ""}
-        ${item.serviceId ? `<div style="margin-top:4px;font-size:13px;color:#000 !important;"><strong>Service:</strong> ${item.serviceId}</div>` : ""}
-        ${item.homepassId ? `<div style="margin-top:4px;font-size:13px;color:#000 !important;"><strong>Homepass:</strong> ${item.homepassId}</div>` : ""}
-        ${item.splitterId ? `<div style="margin-top:4px;font-size:13px;color:#000 !important;"><strong>Splitter:</strong> ${item.splitterId}</div>` : ""}
+        ${item.customerId ? `<div style="margin-top:4px;font-size:13px;color:#000 !important;"><strong>Customer ID:</strong> ${item.customerId}</div>` : ""}
+        ${item.serviceId ? `<div style="margin-top:4px;font-size:13px;color:#000 !important;"><strong>Service ID:</strong> ${item.serviceId}</div>` : ""}
+        ${item.homepassId ? `<div style="margin-top:4px;font-size:13px;color:#000 !important;"><strong>Homepass ID:</strong> ${item.homepassId}</div>` : ""}
+        ${item.splitterId ? `<div style="margin-top:4px;font-size:13px;color:#000 !important;"><strong>Splitter ID:</strong> ${item.splitterId}</div>` : ""}
         <div style="margin-top:8px;padding-top:8px;border-top:1px solid #e5e7eb;">
           <span style="font-size:13px;color:${markerColor};font-weight:600;">${item.type}</span>
           <span style="float:right;font-size:13px;color:#00c951;font-weight:600;">${item.distance.toFixed(0)}m</span>
