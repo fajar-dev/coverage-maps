@@ -20,12 +20,10 @@ export class AuthService {
     if (token) {
       try {
         this.token.value = token
-        // Verify token with /auth/me
         const response = await apiService.client.get<{ success: boolean, data: User }>('/auth/me')
         this.user.value = response.data.data
         localStorage.setItem(this.USER_KEY, JSON.stringify(this.user.value))
       } catch (error) {
-        // If verification fails, logout
         this.logout()
       }
     }
@@ -56,9 +54,6 @@ export class AuthService {
 
       this.token.value = null
       this.user.value = null
-      
-      // Navigate to login or refresh if needed
-      // navigateTo('/login')
     }
   }
 
