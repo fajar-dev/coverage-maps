@@ -11,8 +11,8 @@
       />
     </div>
 
-    <div class="absolute top-2.5 right-15 z-10 flex flex-col gap-2">
-      <UDropdown
+    <div class="absolute top-3 right-16 z-10 flex flex-col gap-2">
+      <UDropdownMenu
         v-if="user"
         :items="userDropdownItems"
         :popper="{ placement: 'bottom-end' }"
@@ -20,23 +20,29 @@
         <UButton
           color="white"
           variant="solid"
-          class="shadow-md rounded-full pl-1 pr-3 py-1 flex items-center gap-2"
+          class="h-10 bg-white text-gray-700 shadow-md border border-gray-200
+                rounded-full px-3 flex items-center gap-2
+                hover:bg-gray-100 transition"
         >
           <UAvatar
-            :src="user.avatar"
+            :src="user.picture"
             :alt="user.name"
             size="2xs"
           />
-          <span class="text-gray-700 text-sm font-medium">{{ user.name }}</span>
+          <span class="text-sm font-medium max-w-[140px] truncate">
+            {{ user.name }}
+          </span>
+          <UIcon name="i-lucide-chevron-down" class="w-4 h-4 text-gray-500" />
         </UButton>
-      </UDropdown>
+      </UDropdownMenu>
 
       <UButton
         v-else
-        size="lg"
-        variant="soft"
-        color="neutral"
-        class="flex items-center justify-center bg-white text-gray-600 shadow-md rounded-full hover:bg-gray-100 hover:text-gray-800 transition"
+        color="white"
+        variant="solid"
+        class="h-10 bg-white text-gray-700 shadow-md border border-gray-200
+              rounded-full px-3 flex items-center gap-2
+              hover:bg-gray-100 transition"
         :loading="googleLoading"
         @click="handleGoogleLogin"
       >
@@ -116,7 +122,7 @@ const userDropdownItems = computed(() => [
   [{
     label: 'Logout',
     icon: 'i-lucide-log-out',
-    click: () => {
+    onSelect: () => {
       authService.logout()
       toast.add({ title: 'Logged out successfully' })
     }

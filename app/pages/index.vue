@@ -77,6 +77,7 @@
 
 <script setup>
 import { coverageService } from "~/services/coverageService";
+import { authService } from "~/services/authService";
 
 const config = useRuntimeConfig();
 const colorMode = useColorMode();
@@ -462,6 +463,10 @@ watch(activeTab, (newTab, oldTab) => {
   if (oldTab !== undefined && map.value && mapLoaded.value) {
     hardResetMap(false);
   }
+});
+
+watch(() => authService.user.value, () => {
+  fetchCoverage();
 });
 
 onMounted(() => {

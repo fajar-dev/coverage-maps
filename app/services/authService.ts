@@ -1,26 +1,33 @@
 import { apiService } from "./apiService"
-import type { AuthResponse } from "~/types/auth"
+import type { AuthResponse, User } from "~/types/auth"
 
 export class AuthService {
   private readonly TOKEN_KEY = 'auth_token'
   private readonly USER_KEY = 'auth_user'
 
-  public user = ref<AuthResponse['user'] | null>(null)
+  public user = ref<User | null>(null)
   public token = ref<string | null>(null)
 
   constructor() {
     this.initSession()
   }
 
-  private initSession() {
+  private async initSession() {
     if (typeof window === 'undefined') return
 
     const token = localStorage.getItem(this.TOKEN_KEY)
-    const user = localStorage.getItem(this.USER_KEY)
-
-    if (token && user) {
-      this.token.value = token
-      this.user.value = JSON.parse(user)
+    
+    if (token) {
+      try {
+        this.token.value = token
+        // Verify token with /auth/me
+        const response = await apiService.client.get<{ success: boolean, data: User }>('/auth/me')
+        this.user.value = response.data.data
+        localStorage.setItem(this.USER_KEY, JSON.stringify(this.user.value))
+      } catch (error) {
+        // If verification fails, logout
+        this.logout()
+      }
     }
   }
 
@@ -34,27 +41,37 @@ export class AuthService {
     }
   }
 
-  logout() {
+  async logout() {
     if (typeof window === 'undefined') return
 
-    localStorage.removeItem(this.TOKEN_KEY)
-    localStorage.removeItem(this.USER_KEY)
+    try {
+      if (this.token.value) {
+        await apiService.client.post('/auth/logout')
+      }
+    } catch (error) {
+      console.error('Logout failed:', error)
+    } finally {
+      localStorage.removeItem(this.TOKEN_KEY)
+      localStorage.removeItem(this.USER_KEY)
 
-    this.token.value = null
-    this.user.value = null
-
-    // Optional: Reload page or redirect
-    // window.location.reload() 
+      this.token.value = null
+      this.user.value = null
+      
+      // Navigate to login or refresh if needed
+      // navigateTo('/login')
+    }
   }
 
-  private setSession(data: AuthResponse) {
+  private setSession(response: AuthResponse) {
     if (typeof window === 'undefined') return
 
-    localStorage.setItem(this.TOKEN_KEY, data.token)
-    localStorage.setItem(this.USER_KEY, JSON.stringify(data.user))
+    const { user, token } = response.data
 
-    this.token.value = data.token
-    this.user.value = data.user
+    localStorage.setItem(this.TOKEN_KEY, token.token)
+    localStorage.setItem(this.USER_KEY, JSON.stringify(user))
+
+    this.token.value = token.token
+    this.user.value = user
   }
 }
 
