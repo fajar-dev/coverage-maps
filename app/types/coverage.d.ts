@@ -19,6 +19,19 @@ export interface CoverageResponse {
   data: CoverageItem[]
 }
 
+
 export interface ExportCoverageParams extends GetCoverageParams {
   types?: string[]
+}
+
+export interface CreateCoverageParams {
+  name?: string | null
+  address?: string | null
+  homepassId?: string | null
+  splitterId?: string | null
+  customerId?: string | null
+  serviceId?: string | null
+  longitude: number
+  latitude: number
+  type: string
 }

@@ -49,6 +49,7 @@
         @toggle-relocate="toggleRelocateMode"
         @toggle-satellite="toggleSatellite"
         @export="handleExportCoverage"
+        @coverage-created="hardResetMap(false)"
       >
         <template #slideover>
           <CoverageListSlideover

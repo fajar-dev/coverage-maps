@@ -1,4 +1,4 @@
-import type { ExportCoverageParams, GetCoverageParams } from "~/types/coverage"
+import type { ExportCoverageParams, GetCoverageParams, CreateCoverageParams, CoverageItem } from "~/types/coverage"
 import { apiService } from "./apiService"
 
 export class CoverageService {
@@ -71,6 +71,15 @@ export class CoverageService {
     } catch (error: any) {
       console.error('Failed to export coverage', error)
       throw new Error(`Export failed: ${error.message}`)
+    }
+  }
+
+  async createCoverage(data: CreateCoverageParams): Promise<CoverageItem> {
+    try {
+      const response = await apiService.client.post('/create', data)
+      return response.data
+    } catch (error: any) {
+      throw new Error(`Failed to create coverage: ${error.message}`)
     }
   }
 }

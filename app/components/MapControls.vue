@@ -63,6 +63,7 @@
 
 
     <div class="absolute bottom-70 right-3 z-10 flex flex-col gap-3 items-end">
+      <!-- <ModalAdd @created="$emit('coverageCreated')" v-if="user" /> -->
       <UButton
         v-if="user"
         icon="i-lucide-download"
@@ -173,5 +174,5 @@ defineProps({
   totalDistance: { type: String, default: '0m' }
 })
 
-defineEmits(['returnToLocation', 'toggleMeasure', 'toggleRelocate', 'toggleSatellite', 'export'])
+defineEmits(['returnToLocation', 'toggleMeasure', 'toggleRelocate', 'toggleSatellite', 'export', 'coverageCreated'])
 </script>
