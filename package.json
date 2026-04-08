@@ -25,6 +25,7 @@
     "@types/google.maps": "^3.58.1",
     "@types/node": "^24.9.1",
     "@vite-pwa/nuxt": "^1.1.0",
+    "baseline-browser-mapping": "^2.10.16",
     "eslint": "^9.38.0",
     "typescript": "^5.9.3",
     "vue-tsc": "^3.1.1"

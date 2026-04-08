@@ -12,18 +12,20 @@ export class CoverageService {
     sw_lat,
     sw_lng
   }: Omit<GetCoverageParams, 'apiUrl'>) {
-    const params: any = { longitude, latitude }
+    const params: any = { 
+      longitude, 
+      latitude,
+      ne_lat,
+      ne_lng,
+      sw_lat,
+      sw_lng
+    }
 
     if (mode === 'radius') {
       params['radius'] = value
     } else if (mode === 'limit') {
       params['limit'] = value
     }
-
-    if (ne_lat) params['ne_lat'] = ne_lat
-    if (ne_lng) params['ne_lng'] = ne_lng
-    if (sw_lat) params['sw_lat'] = sw_lat
-    if (sw_lng) params['sw_lng'] = sw_lng
 
     try {
       const response = await apiService.client.get('/coverage', { params })

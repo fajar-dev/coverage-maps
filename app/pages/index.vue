@@ -83,23 +83,22 @@ import { coverageService } from "~/services/coverageService";
 import { authService } from "~/services/authService";
 import { MarkerClusterer, SuperClusterAlgorithm } from "@googlemaps/markerclusterer";
 
-const config = useRuntimeConfig();
 const colorMode = useColorMode();
 const mapContainer = ref(null);
-const map = ref(null);
-const centerMarker = ref(null);
-const markers = ref([]);
-const markerCluster = ref(null);
-const activeInfoWindow = ref(null);
-const activeCircle = ref(null);
+const map = shallowRef(null);
+const centerMarker = shallowRef(null);
+const markers = shallowRef([]);
+const markerCluster = shallowRef(null);
+const activeInfoWindow = shallowRef(null);
+const activeCircle = shallowRef(null);
 const loading = ref(false);
 const filterLoading = ref(false);
 const isControlOpen = ref(true);
 const isRelocateMode = ref(false);
 const isMeasureMode = ref(false);
 const measurePoints = ref([]);
-const measureMarkers = ref([]);
-const measurePolyline = ref(null);
+const measureMarkers = shallowRef([]);
+const measurePolyline = shallowRef(null);
 const totalDistance = ref("0m");
 const isSatellite = ref(false);
 const isStreetViewActive = ref(false);
@@ -107,10 +106,29 @@ const isClusteringEnabled = ref(true);
 
 const activeTab = ref("radius");
 
-const latitude = ref(3.576378);
-const longitude = ref(98.682272);
-const originalLatitude = ref(3.576378);
-const originalLongitude = ref(98.682272);
+const route = useRoute();
+const router = useRouter();
+
+const defaultLat = 3.576378;
+const defaultLng = 98.682272;
+
+const initialLat = route.query.lat ? parseFloat(route.query.lat) : defaultLat;
+const initialLng = route.query.lng ? parseFloat(route.query.lng) : defaultLng;
+
+const latitude = ref(!isNaN(initialLat) ? initialLat : defaultLat);
+const longitude = ref(!isNaN(initialLng) ? initialLng : defaultLng);
+const originalLatitude = ref(!isNaN(initialLat) ? initialLat : defaultLat);
+const originalLongitude = ref(!isNaN(initialLng) ? initialLng : defaultLng);
+
+watch([latitude, longitude], ([newLat, newLng]) => {
+  router.replace({
+    query: {
+      ...route.query,
+      lat: newLat.toFixed(6),
+      lng: newLng.toFixed(6),
+    },
+  });
+});
 
 const activeRadius = ref(200);
 const activeLimit = ref(10);
@@ -118,22 +136,21 @@ const activeLimit = ref(10);
 const pendingRadius = ref(200);
 const pendingLimit = ref(10);
 
-const currentBounds = ref(null);
-
 const coverageData = ref([]);
 const showLegend = ref(true);
 const searchQuery = ref("");
 const searchSuggestions = ref([]);
 const showSuggestions = ref(false);
-const autocompleteService = ref(null);
-const placesService = ref(null);
+const autocompleteService = shallowRef(null);
+const placesService = shallowRef(null);
 
 const mapLoaded = ref(false);
 const mapReloadKey = ref(0);
-const hasLocationBeenSet = ref(false);
+const hasLocationBeenSet = ref(!!(route.query.lat && route.query.lng));
 
 const visibleTypes = ref({});
 const legendItems = ref([]);
+const lastFetchedBounds = ref("");
 
 const lightMapStyles = [
   { featureType: "poi", stylers: [{ visibility: "off" }] },
@@ -366,50 +383,58 @@ function getMarkerColor(type) {
 }
 
 function clearAllMarkers() {
+  // Clear the clusterer globally to be absolutely sure
+  if (window.markerCluster) {
+    try {
+      window.markerCluster.clearMarkers();
+      if (typeof window.markerCluster.setMap === 'function') {
+        window.markerCluster.setMap(null);
+      }
+    } catch (e) {}
+    window.markerCluster = null;
+    markerCluster.value = null;
+  }
+
   if (markers.value && markers.value.length > 0) {
-    markers.value.forEach((marker) => {
+    for (const marker of markers.value) {
       if (marker) {
         google.maps.event.clearInstanceListeners(marker);
-        marker.setVisible(false);
         marker.setMap(null);
       }
-    });
+    }
   }
 
   markers.value = [];
 
-  if (markerCluster.value) {
-    markerCluster.value.clearMarkers();
-    markerCluster.value = null;
-  }
-
   if (activeInfoWindow.value) {
-    activeInfoWindow.value.close();
-    activeInfoWindow.value.setMap(null);
+    try {
+      activeInfoWindow.value.close();
+    } catch (e) {}
     activeInfoWindow.value = null;
   }
 }
 
-watch(
-  visibleTypes,
-  async () => {
-    if (coverageData.value.length === 0 || !map.value) return;
-    filterLoading.value = true;
-    clearAllMarkers();
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    renderMarkers();
-    await new Promise((resolve) => setTimeout(resolve, 200));
-    filterLoading.value = false;
-  },
-  { deep: true }
-);
+  watch(
+    visibleTypes,
+    () => {
+      if (coverageData.value.length === 0 || !map.value) return;
+      renderMarkers(false);
+    },
+    { deep: true }
+  );
 
-function renderMarkers() {
-  if (!map.value) return;
-  clearAllMarkers();
-  clearMeasurement();
+const isRendering = ref(false);
+
+function renderMarkers(shouldAdjustZoom = false) {
+  if (!map.value || isRendering.value) return;
+  isRendering.value = true;
+  
+  try {
+    clearAllMarkers();
 
   if (!Array.isArray(coverageData.value) || coverageData.value.length === 0) return;
+
+  const markersArray = [];
 
   coverageData.value.forEach((item) => {
     if (!visibleTypes.value[item.type]) return;
@@ -464,26 +489,32 @@ function renderMarkers() {
       activeInfoWindow.value = infoWindow;
     });
 
-    markers.value.push(marker);
+    markersArray.push(marker);
   });
+  
+  markers.value = markersArray;
 
   if (isClusteringEnabled.value && markers.value.length > 0) {
     markerCluster.value = new MarkerClusterer({
       map: map.value,
       markers: markers.value,
       algorithm: new SuperClusterAlgorithm({
-        radius: 60,
+        radius: 50,
+        maxZoom: 18,
       }),
     });
+    window.markerCluster = markerCluster.value;
   } else if (!isClusteringEnabled.value) {
-    markers.value.forEach(m => m.setMap(map.value));
+    markers.value.forEach((m) => m.setMap(map.value));
   }
 
   setTimeout(() => {
-    if (activeTab.value !== 'viewport') {
-      adjustZoomToContent();
-    }
+    if (shouldAdjustZoom) adjustZoomToContent();
   }, 100);
+  
+  } finally {
+    isRendering.value = false;
+  }
 }
 
 watch(activeTab, (newTab, oldTab) => {
@@ -513,16 +544,18 @@ onBeforeUnmount(() => {
 
 async function hardResetMap(isInitialLoad = false) {
   if (loading.value) return;
+  
+  // Reload button or initial load should trigger zoom adjustment
+  const shouldAdjustZoom = true;
+
+  mapLoaded.value = true;
+  await nextTick();
 
   activeRadius.value = pendingRadius.value;
   activeLimit.value = pendingLimit.value;
 
-  mapLoaded.value = false;
-  mapReloadKey.value++;
-
-  await nextTick();
-  mapLoaded.value = true;
-  await nextTick();
+  lastFetchedBounds.value = "";
+  clearAllMarkers();
 
   if (isInitialLoad && !hasLocationBeenSet.value && navigator.geolocation) {
     try {
@@ -540,18 +573,16 @@ async function hardResetMap(isInitialLoad = false) {
       hasLocationBeenSet.value = true;
     }
   }
-  waitForGoogle();
+  waitForGoogle(shouldAdjustZoom);
+  fetchCoverage(true);
 }
 
 async function updateMapLocation() {
   hasLocationBeenSet.value = true;
-
-  mapLoaded.value = false;
-  mapReloadKey.value++;
-  await nextTick();
-  mapLoaded.value = true;
-  await nextTick();
-  waitForGoogle();
+  lastFetchedBounds.value = "";
+  clearAllMarkers();
+  waitForGoogle(true);
+  fetchCoverage(true);
 }
 
 function returnToOriginalLocation() {
@@ -560,44 +591,58 @@ function returnToOriginalLocation() {
   updateMapLocation();
 }
 
-function waitForGoogle() {
-  if (window.google?.maps?.places) initMap();
-  else setTimeout(waitForGoogle, 200);
+function waitForGoogle(shouldAdjustZoom = false) {
+  if (window.google?.maps?.places) initMap(shouldAdjustZoom);
+  else setTimeout(() => waitForGoogle(shouldAdjustZoom), 200);
 }
 
-function initMap() {
+function initMap(shouldAdjustZoom = false) {
   const center = { lat: latitude.value, lng: longitude.value };
 
   if (!mapContainer.value) return;
 
   const dynamicZoom = calculateZoomLevel();
 
-  map.value = new google.maps.Map(mapContainer.value, {
-    center,
-    zoom: dynamicZoom,
-    mapTypeId: isSatellite.value ? 'satellite' : 'roadmap',
-    zoomControl: true,
-    fullscreenControl: true,
-    mapTypeControl: false,
-    streetViewControl: true,
-    styles: isSatellite.value ? [] : currentMapStyles.value,
-  });
+  if (map.value && mapContainer.value.contains(map.value.getDiv())) {
+    map.value.setCenter(center);
+    map.value.setZoom(dynamicZoom);
+    map.value.setMapTypeId(isSatellite.value ? 'satellite' : 'roadmap');
+    map.value.setOptions({ styles: isSatellite.value ? [] : currentMapStyles.value });
+  } else {
+    // If map doesn't exist or container was re-created, initialize it
+    map.value = new google.maps.Map(mapContainer.value, {
+      center,
+      zoom: dynamicZoom,
+      mapTypeId: isSatellite.value ? 'satellite' : 'roadmap',
+      zoomControl: true,
+      fullscreenControl: true,
+      mapTypeControl: false,
+      streetViewControl: true,
+      styles: isSatellite.value ? [] : currentMapStyles.value,
+    });
+    
+    if (window.google?.maps?.places) {
+      autocompleteService.value = new google.maps.places.AutocompleteService();
+      placesService.value = new google.maps.places.PlacesService(map.value);
+    }
 
-  if (window.google?.maps?.places) {
-    autocompleteService.value = new google.maps.places.AutocompleteService();
-    placesService.value = new google.maps.places.PlacesService(map.value);
+    map.value.addListener('idle', () => {
+      if (searchTimeout) clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        fetchCoverage(false, true);
+      }, 300);
+    });
+
+    const streetView = map.value.getStreetView();
+    if (streetView) {
+      streetView.addListener('visible_changed', () => {
+        isStreetViewActive.value = streetView.getVisible();
+      });
+    }
   }
 
   map.value.setCenter(center);
   setCenterMarker();
-  fetchCoverage();
-
-  const streetView = map.value.getStreetView();
-  if (streetView) {
-    streetView.addListener('visible_changed', () => {
-      isStreetViewActive.value = streetView.getVisible();
-    });
-  }
 
   if (mapClickListener) google.maps.event.removeListener(mapClickListener);
   mapClickListener = map.value.addListener("click", (e) => {
@@ -609,25 +654,8 @@ function initMap() {
       isRelocateMode.value = false;
     } else if (isMeasureMode.value) {
       addMeasurePoint(e.latLng);
-    }
-  });
-
-  map.value.addListener("idle", () => {
-    const bounds = map.value.getBounds();
-    if (bounds) {
-      const ne = bounds.getNorthEast();
-      const sw = bounds.getSouthWest();
-      currentBounds.value = {
-        ne_lat: ne.lat(),
-        ne_lng: ne.lng(),
-        sw_lat: sw.lat(),
-        sw_lng: sw.lng()
-      };
-      
-      // If we are in viewport mode, fetch data automatically
-      if (activeTab.value === 'viewport') {
-        fetchCoverage();
-      }
+    } else if (activeInfoWindow.value) {
+      activeInfoWindow.value.close();
     }
   });
 }
@@ -653,7 +681,6 @@ async function toggleMeasureMode() {
     clearMeasurement();
   } else {
     clearMeasurement();
-    await updateMapLocation();
   }
 }
 
@@ -675,7 +702,8 @@ function addMeasurePoint(latLng) {
     },
     zIndex: 1000,
   });
-  measureMarkers.value.push(marker);
+  const newMarkerArray = [...measureMarkers.value, marker];
+  measureMarkers.value = newMarkerArray;
 
   if (measurePolyline.value) {
     measurePolyline.value.setPath(measurePoints.value);
@@ -837,24 +865,44 @@ function setCenterMarker() {
   });
 }
 
-async function fetchCoverage() {
+async function fetchCoverage(shouldAdjustZoom = false, isIdleUpdate = false) {
   if (loading.value) return;
-  loading.value = true;
+
+  // Do not refetch during pan/zoom in Limit mode
+  if (isIdleUpdate && activeTab.value === 'limit') return;
 
   try {
+    let boundsParams = {};
+    if (map.value && activeTab.value !== 'limit') {
+      const bounds = map.value.getBounds();
+      if (bounds) {
+        const ne = bounds.getNorthEast();
+        const sw = bounds.getSouthWest();
+        
+        // Check if bounds have changed enough to warrant a new fetch
+        const boundsKey = `${ne.lat().toFixed(6)},${ne.lng().toFixed(6)},${sw.lat().toFixed(6)},${sw.lng().toFixed(6)}`;
+        if (boundsKey === lastFetchedBounds.value) return;
+        lastFetchedBounds.value = boundsKey;
+
+        boundsParams = {
+          ne_lat: ne.lat(),
+          ne_lng: ne.lng(),
+          sw_lat: sw.lat(),
+          sw_lng: sw.lng(),
+        };
+      }
+    }
+    
+    loading.value = true;
+
     const data = await coverageService.getCoverage({
       longitude: longitude.value,
       latitude: latitude.value,
       mode: activeTab.value,
       value: activeTab.value === "radius" ? activeRadius.value : activeLimit.value,
-      ...(activeTab.value === 'viewport' ? currentBounds.value : {})
+      ...boundsParams,
     });
 
-    // Clear old state after data is ready
-    if (activeCircle.value) {
-      activeCircle.value.setMap(null);
-      activeCircle.value = null;
-    }
     clearAllMarkers();
     coverageData.value = [];
 
@@ -870,20 +918,30 @@ async function fetchCoverage() {
 
     if (activeTab.value === "radius") {
       const center = { lat: latitude.value, lng: longitude.value };
-      activeCircle.value = new google.maps.Circle({
-        strokeColor: "#00c951",
-        strokeOpacity: 0.8,
-        strokeWeight: 2,
-        fillColor: "#75EDAE",
-        fillOpacity: 0.15,
-        map: map.value,
-        center,
-        radius: activeRadius.value,
-        clickable: false,
-      });
+      
+      // Update existing circle instead of creating a new one to prevent map events
+      if (activeCircle.value) {
+        activeCircle.value.setCenter(center);
+        activeCircle.value.setRadius(activeRadius.value);
+        if (!activeCircle.value.getMap()) activeCircle.value.setMap(map.value);
+      } else {
+        activeCircle.value = new google.maps.Circle({
+          strokeColor: "#00c951",
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+          fillColor: "#75EDAE",
+          fillOpacity: 0.15,
+          map: map.value,
+          center,
+          radius: activeRadius.value,
+          clickable: false,
+        });
+      }
+    } else if (activeCircle.value) {
+      activeCircle.value.setMap(null);
     }
 
-    renderMarkers();
+    renderMarkers(shouldAdjustZoom);
   } catch (err) {
     coverageData.value = [];
   } finally {

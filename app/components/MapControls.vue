@@ -20,53 +20,59 @@
     </div>
 
     <div class="absolute top-40 right-2.5 sm:top-3 sm:right-16 z-10 flex flex-col gap-2">
-      <UDropdownMenu
-        v-if="user"
-        :items="userDropdownItems"
-        :popper="{ placement: 'bottom-end' }"
-      >
+      <ClientOnly>
+        <UDropdownMenu
+          v-if="user"
+          :items="userDropdownItems"
+          :popper="{ placement: 'bottom-end' }"
+        >
+          <UButton
+            color="white"
+            variant="solid"
+            class="h-10 shadow-md border rounded-full px-2 sm:px-3 flex items-center gap-2
+                  transition min-w-[40px] justify-center
+                  bg-white text-gray-700 border-gray-200 hover:bg-gray-100
+                  dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
+          >
+            <UAvatar
+              :src="user.picture"
+              :alt="user.name"
+              size="2xs"
+            />
+            <span class="text-sm font-medium max-w-[140px] truncate hidden sm:block">
+              {{ user.name }}
+            </span>
+            <UIcon
+              name="i-lucide-chevron-down"
+              class="w-4 h-4 hidden sm:block text-gray-500 dark:text-gray-300"
+            />
+          </UButton>
+        </UDropdownMenu>
+
         <UButton
+          v-else
           color="white"
           variant="solid"
-          class="h-10 shadow-md border rounded-full px-2 sm:px-3 flex items-center gap-2
-                transition min-w-[40px] justify-center
+          class="h-10 shadow-md border rounded-full
+                flex items-center justify-center gap-2 transition
+                px-0 sm:px-3 w-10 sm:w-auto
                 bg-white text-gray-700 border-gray-200 hover:bg-gray-100
                 dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
+          :loading="googleLoading"
+          @click="handleGoogleLogin"
         >
-          <UAvatar
-            :src="user.picture"
-            :alt="user.name"
-            size="2xs"
-          />
-          <span class="text-sm font-medium max-w-[140px] truncate hidden sm:block">
-            {{ user.name }}
+          <template v-if="!googleLoading" #leading>
+            <Icon name="logos:google-icon" class="w-5 h-5 shrink-0" />
+          </template>
+          <span class="hidden sm:inline whitespace-nowrap">
+            {{ googleLoading ? 'Signing in...' : 'Sign In with Google' }}
           </span>
-          <UIcon
-            name="i-lucide-chevron-down"
-            class="w-4 h-4 hidden sm:block text-gray-500 dark:text-gray-300"
-          />
         </UButton>
-      </UDropdownMenu>
 
-      <UButton
-        v-else
-        color="white"
-        variant="solid"
-        class="h-10 shadow-md border rounded-full
-              flex items-center justify-center gap-2 transition
-              px-0 sm:px-3 w-10 sm:w-auto
-              bg-white text-gray-700 border-gray-200 hover:bg-gray-100
-              dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
-        :loading="googleLoading"
-        @click="handleGoogleLogin"
-      >
-        <template v-if="!googleLoading" #leading>
-          <Icon name="logos:google-icon" class="w-5 h-5 shrink-0" />
+        <template #fallback>
+          <div class="h-10 w-10 sm:w-40 animate-pulse bg-gray-200 dark:bg-gray-800 rounded-full"></div>
         </template>
-        <span class="hidden sm:inline whitespace-nowrap">
-          {{ googleLoading ? 'Signing in...' : 'Sign In with Google' }}
-        </span>
-      </UButton>
+      </ClientOnly>
     </div>
 
 
