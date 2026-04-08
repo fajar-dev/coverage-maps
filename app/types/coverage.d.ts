@@ -10,8 +10,12 @@ export interface GetCoverageParams {
   apiUrl: string
   longitude: number
   latitude: number
-  mode: 'radius' | 'limit'
+  mode: 'radius' | 'limit' | 'viewport'
   value: number
+  ne_lat?: number
+  ne_lng?: number
+  sw_lat?: number
+  sw_lng?: number
 }
 
 export interface CoverageResponse {

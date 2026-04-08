@@ -124,6 +124,27 @@
                 </p>
               </div>
             </template>
+            <template #viewport>
+              <div class="space-y-4 mt-2 py-2 text-center">
+                <UIcon
+                  name="i-lucide-scan-eye"
+                  class="w-12 h-12 text-primary mx-auto opacity-50"
+                />
+                <div>
+                  <h3 class="font-semibold text-sm">Mode Viewport Aktif</h3>
+                  <p class="text-[11px] text-gray-500 mt-1">
+                    Data akan otomatis dimuat sesuai dengan area yang terlihat di peta saat ini.
+                  </p>
+                </div>
+                <UBadge
+                  color="primary"
+                  variant="soft"
+                  size="sm"
+                >
+                  Pencarian Dinamis
+                </UBadge>
+              </div>
+            </template>
           </UTabs>
 
           <div class="border-t border-gray-200 dark:border-gray-700" />
@@ -172,7 +193,8 @@ defineProps({
 defineEmits(['toggle', 'update:activeTab', 'update:radius', 'update:limit', 'reload'])
 
 const tabs = [
-  { label: 'Radius Pencarian', icon: 'i-lucide-circle-dot', value: 'radius', slot: 'radius' },
-  { label: 'Maksimal Data', icon: 'i-lucide-layers', value: 'limit', slot: 'limit' }
+  { label: 'Radius', icon: 'i-lucide-circle-dot', value: 'radius', slot: 'radius' },
+  { label: 'Limit', icon: 'i-lucide-layers', value: 'limit', slot: 'limit' },
+  { label: 'Viewport', icon: 'i-lucide-scan-eye', value: 'viewport', slot: 'viewport' }
 ]
 </script>

@@ -1,5 +1,5 @@
 <template>
-  <div
+  <!-- <div
     v-if="isLoading"
     class="absolute inset-0 bg-black/20 backdrop-blur-sm z-20 flex items-center justify-center"
   >
@@ -12,7 +12,7 @@
         Memuat Peta...
       </span>
     </div>
-  </div>
+  </div> -->
 </template>
 
 <script setup>

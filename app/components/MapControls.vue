@@ -9,6 +9,14 @@
         variant="solid"
         @click="$emit('toggleSatellite')"
       />
+      <UButton
+        :icon="isClusteringEnabled ? 'i-lucide-layout-grid' : 'i-lucide-square-dot'"
+        size="lg"
+        class="w-10 h-10 flex items-center justify-center bg-white text-gray-600 shadow-md rounded-none hover:bg-gray-100 hover:text-gray-800 transition"
+        :class="{ 'text-green-500': isClusteringEnabled }"
+        variant="solid"
+        @click="$emit('toggleClustering')"
+      />
     </div>
 
     <div class="absolute top-40 right-2.5 sm:top-3 sm:right-16 z-10 flex flex-col gap-2">
@@ -171,8 +179,9 @@ defineProps({
   isRelocateMode: { type: Boolean, default: false },
   isMeasureMode: { type: Boolean, default: false },
   isSatellite: { type: Boolean, default: false },
+  isClusteringEnabled: { type: Boolean, default: true },
   totalDistance: { type: String, default: '0m' }
 })
 
-defineEmits(['returnToLocation', 'toggleMeasure', 'toggleRelocate', 'toggleSatellite', 'export', 'coverageCreated'])
+defineEmits(['returnToLocation', 'toggleMeasure', 'toggleRelocate', 'toggleSatellite', 'toggleClustering', 'export', 'coverageCreated'])
 </script>

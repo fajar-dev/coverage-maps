@@ -44,10 +44,12 @@
         :is-measure-mode="isMeasureMode"
         :is-satellite="isSatellite"
         :total-distance="totalDistance"
+        :is-clustering-enabled="isClusteringEnabled"
         @return-to-location="returnToOriginalLocation"
         @toggle-measure="toggleMeasureMode"
         @toggle-relocate="toggleRelocateMode"
         @toggle-satellite="toggleSatellite"
+        @toggle-clustering="isClusteringEnabled = !isClusteringEnabled; renderMarkers()"
         @export="handleExportCoverage"
         @coverage-created="hardResetMap(false)"
       >
@@ -79,6 +81,7 @@
 <script setup>
 import { coverageService } from "~/services/coverageService";
 import { authService } from "~/services/authService";
+import { MarkerClusterer, SuperClusterAlgorithm } from "@googlemaps/markerclusterer";
 
 const config = useRuntimeConfig();
 const colorMode = useColorMode();
@@ -86,6 +89,7 @@ const mapContainer = ref(null);
 const map = ref(null);
 const centerMarker = ref(null);
 const markers = ref([]);
+const markerCluster = ref(null);
 const activeInfoWindow = ref(null);
 const activeCircle = ref(null);
 const loading = ref(false);
@@ -99,6 +103,7 @@ const measurePolyline = ref(null);
 const totalDistance = ref("0m");
 const isSatellite = ref(false);
 const isStreetViewActive = ref(false);
+const isClusteringEnabled = ref(true);
 
 const activeTab = ref("radius");
 
@@ -112,6 +117,8 @@ const activeLimit = ref(10);
 
 const pendingRadius = ref(200);
 const pendingLimit = ref(10);
+
+const currentBounds = ref(null);
 
 const coverageData = ref([]);
 const showLegend = ref(true);
@@ -371,6 +378,11 @@ function clearAllMarkers() {
 
   markers.value = [];
 
+  if (markerCluster.value) {
+    markerCluster.value.clearMarkers();
+    markerCluster.value = null;
+  }
+
   if (activeInfoWindow.value) {
     activeInfoWindow.value.close();
     activeInfoWindow.value.setMap(null);
@@ -407,7 +419,7 @@ function renderMarkers() {
 
     const marker = new google.maps.Marker({
       position: { lat, lng },
-      map: map.value,
+      map: null,
       title: item.residentName || item.name,
       visible: true,
       icon: {
@@ -455,8 +467,22 @@ function renderMarkers() {
     markers.value.push(marker);
   });
 
+  if (isClusteringEnabled.value && markers.value.length > 0) {
+    markerCluster.value = new MarkerClusterer({
+      map: map.value,
+      markers: markers.value,
+      algorithm: new SuperClusterAlgorithm({
+        radius: 60,
+      }),
+    });
+  } else if (!isClusteringEnabled.value) {
+    markers.value.forEach(m => m.setMap(map.value));
+  }
+
   setTimeout(() => {
-    adjustZoomToContent();
+    if (activeTab.value !== 'viewport') {
+      adjustZoomToContent();
+    }
   }, 100);
 }
 
@@ -583,8 +609,25 @@ function initMap() {
       isRelocateMode.value = false;
     } else if (isMeasureMode.value) {
       addMeasurePoint(e.latLng);
-    } else if (activeInfoWindow.value) {
-      activeInfoWindow.value.close();
+    }
+  });
+
+  map.value.addListener("idle", () => {
+    const bounds = map.value.getBounds();
+    if (bounds) {
+      const ne = bounds.getNorthEast();
+      const sw = bounds.getSouthWest();
+      currentBounds.value = {
+        ne_lat: ne.lat(),
+        ne_lng: ne.lng(),
+        sw_lat: sw.lat(),
+        sw_lng: sw.lng()
+      };
+      
+      // If we are in viewport mode, fetch data automatically
+      if (activeTab.value === 'viewport') {
+        fetchCoverage();
+      }
     }
   });
 }
@@ -799,20 +842,21 @@ async function fetchCoverage() {
   loading.value = true;
 
   try {
-    if (activeCircle.value) {
-      activeCircle.value.setMap(null);
-      activeCircle.value = null;
-    }
-
-    clearAllMarkers();
-    coverageData.value = [];
-
     const data = await coverageService.getCoverage({
       longitude: longitude.value,
       latitude: latitude.value,
       mode: activeTab.value,
       value: activeTab.value === "radius" ? activeRadius.value : activeLimit.value,
+      ...(activeTab.value === 'viewport' ? currentBounds.value : {})
     });
+
+    // Clear old state after data is ready
+    if (activeCircle.value) {
+      activeCircle.value.setMap(null);
+      activeCircle.value = null;
+    }
+    clearAllMarkers();
+    coverageData.value = [];
 
     if (Array.isArray(data)) {
       coverageData.value = data;
