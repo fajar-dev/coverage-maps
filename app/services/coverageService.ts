@@ -31,7 +31,7 @@ export class CoverageService {
       const response = await apiService.client.get('/coverage', { params, signal })
       return response.data
     } catch (error: any) {
-      throw error // Throw original error so caller can catch Axios CanceledError
+      throw error
     }
   }
 
