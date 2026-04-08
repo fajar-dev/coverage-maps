@@ -11,7 +11,7 @@ export class CoverageService {
     ne_lng,
     sw_lat,
     sw_lng
-  }: Omit<GetCoverageParams, 'apiUrl'>) {
+  }: Omit<GetCoverageParams, 'apiUrl'>, signal?: AbortSignal) {
     const params: any = { 
       longitude, 
       latitude,
@@ -28,10 +28,10 @@ export class CoverageService {
     }
 
     try {
-      const response = await apiService.client.get('/coverage', { params })
+      const response = await apiService.client.get('/coverage', { params, signal })
       return response.data
     } catch (error: any) {
-      throw new Error(`Failed to fetch coverage: ${error.message}`)
+      throw error // Throw original error so caller can catch Axios CanceledError
     }
   }
 
