@@ -1,5 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  ssr: false,
+
   modules: ['@nuxt/eslint', '@nuxt/ui', '@vite-pwa/nuxt', 'nuxt-vue3-google-signin'],
 
   devtools: {
@@ -26,8 +28,10 @@ export default defineNuxtConfig({
     clientId: process.env.NUXT_GOOGLE_CLIENT_ID,
   },
 
-  routeRules: {
-    '/': { prerender: true }
+  vite: {
+    optimizeDeps: {
+      include: ['@googlemaps/markerclusterer'],
+    },
   },
 
   compatibilityDate: '2025-01-15',
